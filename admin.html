@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .welcome { font-size: 1.2rem; color: #aaa; margin-bottom: 2rem; }
+        .card { background: #1a1a2e; border-radius: 10px; padding: 24px; margin-bottom: 16px; border: 1px solid #2a2a3e; }
+        .card h2 { margin-bottom: 8px; font-size: 1.1rem; }
+        .card p { color: #888; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync</h1>
+        <div class="header-right">
+            <span id="user-name" style="color:#aaa;font-size:13px;"></span>
+            <button class="btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <div class="container">
+        <p class="welcome" id="welcome">Welcome back!</p>
+        <div class="card">
+            <h2>Dashboard</h2>
+            <p>Your playing card trading platform is ready. Start building from here.</p>
+        </div>
+    </div>
+    <script>
+        const token = localStorage.getItem('auth_token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token) window.location.href = 'login.html';
+
+        document.getElementById('user-name').textContent = user.email || '';
+        document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
+
+        function getAuthToken() { return localStorage.getItem('auth_token'); }
+
+        function logout() {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).finally(() => {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+        }
+    </script>
+</body>
+</html>
