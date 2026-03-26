@@ -201,8 +201,8 @@
             <p class="integration-desc">Accept payments directly through your Card Sync marketplace with PayPal checkout integration.</p>
         </div>
 
-        <!-- Coming Soon: eBay -->
-        <div class="integration-card coming-soon">
+        <!-- eBay Integration -->
+        <div class="integration-card" id="ebay-card">
             <div class="integration-header">
                 <div class="integration-icon" style="background:rgba(226,38,28,0.15);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -210,10 +210,48 @@
                     </svg>
                 </div>
                 <div>
-                    <h2>eBay <span class="tag tag-soon">Coming Soon</span></h2>
+                    <h2>eBay <span class="tag tag-not-connected" id="ebay-tag">Not Connected</span></h2>
                 </div>
             </div>
-            <p class="integration-desc">List your Card Sync inventory on eBay automatically and keep stock levels in sync across platforms.</p>
+
+            <p class="integration-desc">
+                List your Card Sync inventory on eBay automatically. Push your cards as eBay listings and keep stock levels in sync across platforms. Requires Business plan or higher.
+            </p>
+
+            <div class="status-bar" id="ebay-status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="ebay-dot"></div>
+                    <span id="ebay-status-text">Not connected</span>
+                </div>
+                <div class="status-actions" id="ebay-status-actions">
+                    <button class="btn btn-sm" style="background:#e2261c;border-color:#e2261c;" onclick="connectEbay()">Connect eBay</button>
+                </div>
+            </div>
+
+            <div class="steps">
+                <h3>How to Connect</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Click "Connect eBay"</h4>
+                        <p>You'll be redirected to eBay's login page to authorize Card Sync to manage your listings.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Log in and approve</h4>
+                        <p>Sign into your eBay seller account and click "Agree" to grant Card Sync access to your inventory and listings.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Start syncing</h4>
+                        <p>Once connected, use the sync buttons to push your inventory to eBay as live listings. Card Sync handles the rest.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Coming Soon: TCGplayer -->
@@ -368,6 +406,88 @@
         }
 
         loadSheetStatus();
+
+        // --- eBay Integration ---
+        async function connectEbay() {
+            const data = await apiFetch('/api/ebay/connect');
+            if (data.success && data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.error || 'Failed to start eBay connection');
+            }
+        }
+
+        async function loadEbayStatus() {
+            const data = await apiFetch('/api/ebay/status');
+            const tag = document.getElementById('ebay-tag');
+            const dot = document.getElementById('ebay-dot');
+            const statusText = document.getElementById('ebay-status-text');
+            const actions = document.getElementById('ebay-status-actions');
+
+            if (data.success && data.connected) {
+                const conn = data.connection;
+                tag.className = 'tag tag-connected';
+                tag.textContent = 'Connected';
+                dot.className = 'status-dot on';
+
+                let text = conn.ebay_username || 'Connected';
+                if (conn.last_synced_at) text += ' — Last synced: ' + new Date(conn.last_synced_at).toLocaleString();
+                if (conn.last_sync_status === 'error') text += ' (last sync failed)';
+                statusText.textContent = text;
+
+                actions.innerHTML = `
+                    <button class="btn btn-sm" style="background:#e2261c;border-color:#e2261c;" onclick="syncEbay('push')">Push to eBay (25 items)</button>
+                    <button class="btn btn-sm btn-danger" onclick="disconnectEbay()">Disconnect</button>
+                `;
+            } else {
+                tag.className = 'tag tag-not-connected';
+                tag.textContent = 'Not Connected';
+                dot.className = 'status-dot off';
+                statusText.textContent = 'Not connected';
+                actions.innerHTML = '<button class="btn btn-sm" style="background:#e2261c;border-color:#e2261c;" onclick="connectEbay()">Connect eBay</button>';
+            }
+        }
+
+        async function syncEbay(action) {
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = 'Syncing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/ebay/sync', {
+                method: 'POST',
+                body: JSON.stringify({ action }),
+            });
+
+            btn.textContent = orig;
+            btn.disabled = false;
+
+            if (data.success) {
+                loadEbayStatus();
+                alert(`Pushed ${data.pushed}/${data.total} items to eBay.` +
+                    (data.errors?.length ? ` ${data.errors.length} errors.` : ''));
+            } else {
+                alert(data.error || 'eBay sync failed');
+            }
+        }
+
+        async function disconnectEbay() {
+            if (!confirm('Disconnect eBay? Your existing eBay listings will remain active.')) return;
+            const data = await apiFetch('/api/ebay/status', { method: 'DELETE' });
+            if (data.success) loadEbayStatus();
+        }
+
+        // Check for eBay callback result in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('ebay') === 'connected') {
+            alert('eBay connected successfully!');
+            history.replaceState({}, '', '/integrations.html');
+        } else if (urlParams.get('ebay') === 'error') {
+            alert('eBay connection failed: ' + (urlParams.get('msg') || 'Unknown error'));
+            history.replaceState({}, '', '/integrations.html');
+        }
+
+        loadEbayStatus();
     </script>
 </body>
 </html>
