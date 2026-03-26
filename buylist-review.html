@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Buylist Review</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-success { background: #4caf50; border-color: #4caf50; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 1.5rem; align-items: center; }
+        .toolbar select { padding: 8px 12px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #2a2a3e; font-size: 14px; }
+        th { background: #12122a; color: #aaa; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-pending { background: rgba(74,144,217,0.2); color: #4a90d9; }
+        .badge-reviewed { background: rgba(255,152,0,0.2); color: #ff9800; }
+        .badge-accepted { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .badge-rejected { background: rgba(244,67,54,0.2); color: #f44336; }
+        .badge-completed { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .empty { text-align: center; padding: 3rem; color: #666; }
+        .detail-panel { display: none; background: #12122a; border-radius: 10px; padding: 24px; margin-bottom: 16px; border: 1px solid #2a2a3e; }
+        .detail-panel.active { display: block; }
+        .detail-panel h2 { font-size: 1.1rem; margin-bottom: 16px; }
+        .detail-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; font-size: 13px; }
+        .detail-info .label { color: #888; font-size: 11px; text-transform: uppercase; }
+        .detail-table { width: 100%; }
+        .detail-table input { width: 80px; padding: 6px; border: 1px solid #333; border-radius: 4px; background: #1a1a2e; color: #fff; font-size: 13px; text-align: right; }
+        .detail-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync — Buylist</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+            <a href="orders.html" class="btn">Orders</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="toolbar">
+            <select id="filter-status" onchange="loadBuylist()">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="completed">Completed</option>
+            </select>
+            <div style="flex:1;"></div>
+            <span style="color:#888;font-size:13px;">Share your buylist link: <a href="buylist.html?dealer=1" style="color:#4a90d9;" id="buylist-link">buylist.html</a></span>
+        </div>
+
+        <div class="detail-panel" id="detail-panel"></div>
+
+        <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Email</th><th>Cards</th><th>Offer</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="buylist-body"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody>
+        </table>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        document.getElementById('buylist-link').href = 'buylist.html?dealer=' + (user.id || 1);
+        document.getElementById('buylist-link').textContent = location.origin + '/buylist.html?dealer=' + (user.id || 1);
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+
+        function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+        async function loadBuylist() {
+            const status = document.getElementById('filter-status').value;
+            const params = new URLSearchParams();
+            if (status) params.set('status', status);
+
+            const data = await apiFetch('/api/buylist?' + params);
+            const tbody = document.getElementById('buylist-body');
+
+            if (!data.success || data.submissions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">No buylist submissions yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.submissions.map(s => `
+                <tr>
+                    <td>#${s.id}</td>
+                    <td>${esc(s.customer_name)}</td>
+                    <td>${esc(s.customer_email || '—')}</td>
+                    <td>${s.item_count} card${s.item_count != 1 ? 's' : ''}</td>
+                    <td>${s.total_offer > 0 ? '$' + parseFloat(s.total_offer).toFixed(2) : '—'}</td>
+                    <td><span class="badge badge-${s.status}">${s.status}</span></td>
+                    <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td><button class="btn btn-sm btn-primary" onclick="viewSubmission(${s.id})">Review</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function viewSubmission(id) {
+            const data = await apiFetch('/api/buylist/' + id);
+            if (!data.success) return alert('Failed to load');
+
+            const s = data.submission;
+            const panel = document.getElementById('detail-panel');
+
+            panel.innerHTML = `
+                <h2>Buylist #${s.id} — ${esc(s.customer_name)}</h2>
+                <div class="detail-info">
+                    <div><div class="label">Email</div>${esc(s.customer_email || 'Not provided')}</div>
+                    <div><div class="label">Phone</div>${esc(s.customer_phone || 'Not provided')}</div>
+                    <div><div class="label">Status</div><span class="badge badge-${s.status}">${s.status}</span></div>
+                </div>
+                ${s.notes ? '<p style="color:#aaa;font-size:13px;margin-bottom:12px;">Notes: ' + esc(s.notes) + '</p>' : ''}
+                <table class="detail-table">
+                    <thead><tr><th>Card</th><th>Category</th><th>Set</th><th>Condition</th><th>Qty</th><th>Asking</th><th>Your Offer</th><th>Status</th></tr></thead>
+                    <tbody>
+                        ${s.items.map(i => `
+                            <tr>
+                                <td>${esc(i.card_name)}</td>
+                                <td>${esc(i.category || '—')}</td>
+                                <td>${esc(i.set_name || '—')}</td>
+                                <td>${esc(i.condition)}</td>
+                                <td>${i.quantity}</td>
+                                <td>${i.asking_price ? '$' + parseFloat(i.asking_price).toFixed(2) : '—'}</td>
+                                <td><input type="number" step="0.01" value="${i.offer_price || ''}" data-item-id="${i.id}" class="offer-input"></td>
+                                <td>
+                                    <select data-item-id="${i.id}" class="item-status" style="padding:4px;background:#1a1a2e;color:#fff;border:1px solid #333;border-radius:4px;font-size:12px;">
+                                        <option value="pending" ${i.status==='pending'?'selected':''}>Pending</option>
+                                        <option value="accepted" ${i.status==='accepted'?'selected':''}>Accept</option>
+                                        <option value="rejected" ${i.status==='rejected'?'selected':''}>Reject</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="detail-actions">
+                    <button class="btn" onclick="document.getElementById('detail-panel').classList.remove('active')">Close</button>
+                    <button class="btn btn-danger" onclick="updateBuylist(${s.id}, 'rejected')">Reject All</button>
+                    <button class="btn btn-success" onclick="updateBuylist(${s.id}, 'accepted')">Accept & Save Offers</button>
+                </div>
+            `;
+            panel.classList.add('active');
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function updateBuylist(id, status) {
+            const items = [];
+            document.querySelectorAll('.offer-input').forEach(input => {
+                const itemId = input.dataset.itemId;
+                const statusSelect = document.querySelector('.item-status[data-item-id="' + itemId + '"]');
+                items.push({
+                    id: parseInt(itemId),
+                    offer_price: parseFloat(input.value) || null,
+                    status: status === 'rejected' ? 'rejected' : (statusSelect?.value || 'pending'),
+                });
+            });
+
+            const data = await apiFetch('/api/buylist/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ status, items }),
+            });
+
+            if (data.success) {
+                document.getElementById('detail-panel').classList.remove('active');
+                loadBuylist();
+            } else {
+                alert(data.error || 'Failed to update');
+            }
+        }
+
+        loadBuylist();
+    </script>
+</body>
+</html>

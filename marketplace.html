@@ -34,6 +34,22 @@
         .badge-condition { background: rgba(74,144,217,0.2); color: #4a90d9; }
         .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
         .empty { text-align: center; padding: 3rem; color: #666; }
+
+        /* Card detail modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a2e; border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-card-img { width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; background: #12122a; margin-bottom: 16px; }
+        .modal-card-placeholder { width: 100%; height: 200px; background: #12122a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 64px; color: #333; margin-bottom: 16px; }
+        .modal h2 { font-size: 1.2rem; margin-bottom: 8px; }
+        .modal-meta { font-size: 13px; color: #888; margin-bottom: 16px; }
+        .modal-meta span { margin-right: 12px; }
+        .modal-price { font-size: 28px; font-weight: 700; color: #4caf50; margin-bottom: 16px; }
+        .modal-details { font-size: 13px; color: #aaa; line-height: 1.6; }
+        .modal-close { margin-top: 16px; }
+        .sell-banner { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; margin-bottom: 1.5rem; text-align: center; }
+        .sell-banner p { color: #aaa; font-size: 14px; margin-bottom: 8px; }
+        .sell-banner a { color: #4a90d9; text-decoration: none; font-weight: 600; }
         .stats { display: flex; gap: 16px; margin-bottom: 1.5rem; }
         .stat-badge { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #aaa; cursor: pointer; }
         .stat-badge.active { border-color: #4a90d9; color: #fff; }
@@ -70,7 +86,16 @@
             </select>
         </div>
 
+        <div class="sell-banner">
+            <p>Have cards to sell? <a href="buylist.html?dealer=1">Submit your cards to our buylist</a> and get an offer!</p>
+        </div>
+
         <div class="cards-grid" id="cards-grid"></div>
+
+        <!-- Card Detail Modal -->
+        <div class="modal-overlay" id="card-modal" onclick="if(event.target===this)closeCardModal()">
+            <div class="modal" id="card-modal-content"></div>
+        </div>
         <div class="pagination" id="pagination"></div>
     </div>
 
@@ -147,7 +172,7 @@
             }
 
             grid.innerHTML = data.cards.map(card => `
-                <div class="card">
+                <div class="card" onclick='showCard(${JSON.stringify(card).replace(/'/g, "&#39;")})' style="cursor:pointer;"
                     <div class="card-img">
                         ${card.image_url
                             ? `<img src="${esc(card.image_url)}" alt="${esc(card.name)}">`
@@ -178,6 +203,34 @@
                 html += `<button class="btn btn-sm${i === data.page ? ' btn-primary' : ''}" onclick="currentPage=${i};loadMarketplace()">${i}</button>`;
             }
             document.getElementById('pagination').innerHTML = html;
+        }
+
+        function showCard(card) {
+            const modal = document.getElementById('card-modal-content');
+            modal.innerHTML = `
+                ${card.image_url
+                    ? '<img class="modal-card-img" src="' + esc(card.image_url) + '" alt="' + esc(card.name) + '">'
+                    : '<div class="modal-card-placeholder">&#127183;</div>'}
+                <h2>${esc(card.name)}</h2>
+                <div class="modal-meta">
+                    <span>${esc(card.category)}</span>
+                    ${card.set_name ? '<span>' + esc(card.set_name) + '</span>' : ''}
+                    ${card.card_number ? '<span>#' + esc(card.card_number) + '</span>' : ''}
+                    ${card.rarity ? '<span>' + esc(card.rarity) + '</span>' : ''}
+                </div>
+                <div class="modal-price">${card.sell_price ? '$' + parseFloat(card.sell_price).toFixed(2) : 'Price TBD'}</div>
+                <div class="modal-details">
+                    <strong>Condition:</strong> ${conditionLabels[card.condition] || card.condition}<br>
+                    <strong>Available:</strong> ${card.quantity} in stock
+                    ${card.description ? '<br><br>' + esc(card.description) : ''}
+                </div>
+                <div class="modal-close"><button class="btn" onclick="closeCardModal()">Close</button></div>
+            `;
+            document.getElementById('card-modal').classList.add('active');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.remove('active');
         }
 
         loadMarketplace();

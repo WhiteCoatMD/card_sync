@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Team</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .section { background: #1a1a2e; border-radius: 10px; padding: 24px; margin-bottom: 16px; border: 1px solid #2a2a3e; }
+        .section h2 { font-size: 1.1rem; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        th { color: #888; font-size: 11px; text-transform: uppercase; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-owner { background: rgba(156,39,176,0.2); color: #9c27b0; }
+        .badge-manager { background: rgba(74,144,217,0.2); color: #4a90d9; }
+        .badge-employee { background: rgba(158,158,158,0.2); color: #9e9e9e; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .upgrade-msg { text-align: center; padding: 4rem 2rem; color: #888; }
+        .upgrade-msg h2 { color: #fff; margin-bottom: 8px; }
+        .upgrade-msg a { color: #4a90d9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync — Team</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+        </div>
+    </div>
+    <div class="container" id="main-content">
+        <div class="section">
+            <h2>Team Members</h2>
+            <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last Login</th><th>Actions</th></tr></thead>
+                <tbody id="members-body"><tr><td colspan="5" style="color:#666;">Loading...</td></tr></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Invite Team Member</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="invite-email" placeholder="team@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="invite-role">
+                        <option value="employee">Employee — can view/edit inventory</option>
+                        <option value="manager">Manager — full access except billing</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="inviteMember()">Send Invite</button>
+        </div>
+
+        <div class="section" id="pending-section" style="display:none;">
+            <h2>Pending Invitations</h2>
+            <table>
+                <thead><tr><th>Email</th><th>Role</th><th>Sent</th><th>Expires</th></tr></thead>
+                <tbody id="invites-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+        function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+        async function loadTeam() {
+            const data = await apiFetch('/api/team');
+            if (data.upgrade_required) {
+                document.getElementById('main-content').innerHTML = '<div class="upgrade-msg"><h2>Team Management requires Business plan or higher</h2><p><a href="pricing.html">Upgrade your plan</a> to invite team members.</p></div>';
+                return;
+            }
+            if (!data.success) return;
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            document.getElementById('members-body').innerHTML = data.members.map(m => `
+                <tr>
+                    <td>${esc(m.display_name || '—')}</td>
+                    <td>${esc(m.email)}</td>
+                    <td><span class="badge badge-${m.role}">${m.role}</span></td>
+                    <td>${m.last_login_at ? new Date(m.last_login_at).toLocaleDateString() : 'Never'}</td>
+                    <td>${m.id !== user.id && m.role !== 'owner' ? `<button class="btn btn-sm btn-danger" onclick="removeMember(${m.id})">Remove</button>` : ''}</td>
+                </tr>
+            `).join('');
+
+            if (data.pending_invites.length > 0) {
+                document.getElementById('pending-section').style.display = 'block';
+                document.getElementById('invites-body').innerHTML = data.pending_invites.map(i => `
+                    <tr><td>${esc(i.email)}</td><td>${i.role}</td><td>${new Date(i.created_at).toLocaleDateString()}</td><td>${new Date(i.expires_at).toLocaleDateString()}</td></tr>
+                `).join('');
+            }
+        }
+
+        async function inviteMember() {
+            const email = document.getElementById('invite-email').value;
+            const role = document.getElementById('invite-role').value;
+            if (!email) return alert('Enter an email');
+
+            const data = await apiFetch('/api/team', { method: 'POST', body: JSON.stringify({ email, role }) });
+            if (data.success) {
+                alert(data.message);
+                document.getElementById('invite-email').value = '';
+                loadTeam();
+            } else {
+                alert(data.error || 'Failed to invite');
+            }
+        }
+
+        async function removeMember(id) {
+            if (!confirm('Remove this team member?')) return;
+            const data = await apiFetch('/api/team/' + id, { method: 'DELETE' });
+            if (data.success) loadTeam();
+            else alert(data.error || 'Failed to remove');
+        }
+
+        loadTeam();
+    </script>
+</body>
+</html>

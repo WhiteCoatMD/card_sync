@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Sell Your Cards</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .intro { color: #aaa; font-size: 14px; margin-bottom: 2rem; line-height: 1.6; }
+        .intro h2 { color: #fff; font-size: 1.3rem; margin-bottom: 8px; }
+        .form-section { background: #1a1a2e; border-radius: 10px; padding: 24px; margin-bottom: 16px; border: 1px solid #2a2a3e; }
+        .form-section h3 { font-size: 14px; margin-bottom: 16px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4a90d9; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-success { background: #4caf50; border-color: #4caf50; font-size: 16px; padding: 14px 24px; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .card-item { background: #0d0d1a; border: 1px solid #333; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+        .card-item .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-item .card-header strong { font-size: 13px; color: #aaa; }
+        .remove-btn { background: none; border: none; color: #f44; cursor: pointer; font-size: 18px; }
+        .success-msg { text-align: center; padding: 3rem; }
+        .success-msg h2 { color: #4caf50; margin-bottom: 8px; }
+        .success-msg p { color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync</h1>
+    </div>
+    <div class="container">
+        <div class="intro">
+            <h2>Sell Your Cards</h2>
+            <p>Want to sell your cards? Fill out the form below with the cards you'd like to sell. We'll review your submission and get back to you with an offer.</p>
+        </div>
+
+        <div id="form-content">
+            <div class="form-section">
+                <h3>Your Info</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Your Name *</label>
+                        <input type="text" id="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="customer-email" placeholder="So we can send you the offer">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone (optional)</label>
+                        <input type="tel" id="customer-phone">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Your Cards <button class="btn btn-sm btn-primary" onclick="addCard()" style="float:right;margin-top:-4px;">+ Add Card</button></h3>
+                <div id="cards-list"></div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <textarea id="notes" placeholder="Anything else you'd like us to know..."></textarea>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-success" onclick="submitBuylist()">Submit Cards for Review</button>
+            </div>
+        </div>
+
+        <div id="success-content" class="success-msg" style="display:none;">
+            <h2>Cards Submitted!</h2>
+            <p>We'll review your cards and get back to you with an offer. Thank you!</p>
+            <br>
+            <button class="btn btn-primary" onclick="location.reload()">Submit More Cards</button>
+        </div>
+    </div>
+
+    <script>
+        // Get dealer_id from URL params
+        const params = new URLSearchParams(window.location.search);
+        const dealerId = params.get('dealer') || 1;
+
+        let cardCount = 0;
+
+        function addCard() {
+            cardCount++;
+            const list = document.getElementById('cards-list');
+            const div = document.createElement('div');
+            div.className = 'card-item';
+            div.id = 'card-' + cardCount;
+            div.innerHTML = `
+                <div class="card-header"><strong>Card #${cardCount}</strong><button class="remove-btn" onclick="document.getElementById('card-${cardCount}').remove()">&times;</button></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Card Name *</label><input type="text" class="c-name" required></div>
+                    <div class="form-group"><label>Category</label>
+                        <select class="c-category">
+                            <option value="pokemon">Pokemon</option><option value="magic">Magic: The Gathering</option>
+                            <option value="yugioh">Yu-Gi-Oh!</option><option value="sports">Sports</option>
+                            <option value="one_piece">One Piece</option><option value="lorcana">Lorcana</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Set Name</label><input type="text" class="c-set"></div>
+                    <div class="form-group"><label>Card Number</label><input type="text" class="c-number"></div>
+                    <div class="form-group"><label>Condition</label>
+                        <select class="c-condition">
+                            <option value="mint">Mint</option><option value="near_mint" selected>Near Mint</option>
+                            <option value="lightly_played">Lightly Played</option><option value="moderately_played">Mod. Played</option>
+                            <option value="heavily_played">Heavily Played</option><option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Quantity</label><input type="number" class="c-qty" value="1" min="1"></div>
+                    <div class="form-group"><label>Asking Price ($)</label><input type="number" class="c-price" step="0.01" min="0" placeholder="Your desired price"></div>
+                </div>
+            `;
+            list.appendChild(div);
+        }
+
+        // Start with one card
+        addCard();
+
+        async function submitBuylist() {
+            const customerName = document.getElementById('customer-name').value;
+            if (!customerName) return alert('Please enter your name');
+
+            const cardItems = document.querySelectorAll('.card-item');
+            const items = [];
+            for (const el of cardItems) {
+                const name = el.querySelector('.c-name').value;
+                if (!name) continue;
+                items.push({
+                    card_name: name,
+                    category: el.querySelector('.c-category').value,
+                    set_name: el.querySelector('.c-set').value || null,
+                    card_number: el.querySelector('.c-number').value || null,
+                    condition: el.querySelector('.c-condition').value,
+                    quantity: parseInt(el.querySelector('.c-qty').value) || 1,
+                    asking_price: parseFloat(el.querySelector('.c-price').value) || null,
+                });
+            }
+
+            if (items.length === 0) return alert('Please add at least one card');
+
+            const body = {
+                dealer_id: parseInt(dealerId),
+                customer_name: customerName,
+                customer_email: document.getElementById('customer-email').value || null,
+                customer_phone: document.getElementById('customer-phone').value || null,
+                notes: document.getElementById('notes').value || null,
+                items,
+            };
+
+            try {
+                const res = await fetch('/api/buylist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('form-content').style.display = 'none';
+                    document.getElementById('success-content').style.display = 'block';
+                } else {
+                    alert(data.error || 'Failed to submit');
+                }
+            } catch (e) {
+                alert('Connection error. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

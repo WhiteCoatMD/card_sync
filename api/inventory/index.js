@@ -8,6 +8,7 @@ const { requireAuth } = require('../../lib/auth');
 const { setCorsHeaders } = require('../../lib/cors-security');
 const { getPool } = require('../../lib/db');
 const { retryQuery } = require('../../lib/db-retry');
+const { checkCardLimit } = require('../../lib/plans');
 
 const pool = getPool();
 
@@ -91,6 +92,18 @@ module.exports = requireAuth(async function handler(req, res) {
 
             if (!category || !name) {
                 return res.status(400).json({ success: false, error: 'Category and name are required' });
+            }
+
+            // Check plan card limit
+            const limitCheck = await checkCardLimit(pool, req.user.id, req.user.plan);
+            if (!limitCheck.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    error: `Card limit reached (${limitCheck.current}/${limitCheck.limit}). Upgrade your plan to add more cards.`,
+                    upgrade_required: true,
+                    current: limitCheck.current,
+                    limit: limitCheck.limit,
+                });
             }
 
             const result = await retryQuery(

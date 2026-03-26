@@ -90,6 +90,7 @@
             <a href="marketplace.html" class="btn">Marketplace</a>
             <a href="integrations.html" class="btn">Integrations</a>
             <button class="btn btn-price" onclick="checkAllPrices()">Check Market Prices</button>
+            <button class="btn" onclick="openImportModal()">Import CSV</button>
             <button class="btn btn-primary" onclick="openAddModal()">+ Add Card</button>
         </div>
     </div>
@@ -257,6 +258,23 @@
             <div class="modal-actions">
                 <button class="btn" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveCard()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal" style="max-width:650px;">
+            <h2>Import Cards from CSV</h2>
+            <p style="color:#aaa;font-size:13px;margin-bottom:12px;">Upload a CSV file with your card data. Required columns: <strong>name</strong>, <strong>category</strong>. Optional: set_name, card_number, rarity, condition, quantity, buy_price, sell_price, description, status.</p>
+            <div class="form-group">
+                <label>CSV File</label>
+                <input type="file" id="csv-file" accept=".csv" style="padding:8px;">
+            </div>
+            <div id="import-preview" style="display:none;margin-top:14px;max-height:200px;overflow-y:auto;font-size:12px;color:#aaa;background:#0d0d1a;border-radius:6px;padding:12px;"></div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeImportModal()">Cancel</button>
+                <button class="btn btn-primary" id="import-btn" onclick="runImport()" disabled>Import</button>
             </div>
         </div>
     </div>
@@ -467,6 +485,75 @@
                     opt.textContent = c.category.charAt(0).toUpperCase() + c.category.slice(1) + ` (${c.count})`;
                     sel.appendChild(opt);
                 });
+            }
+        }
+
+        // --- CSV Import ---
+        let parsedCards = [];
+
+        function openImportModal() {
+            document.getElementById('import-modal').classList.add('active');
+            document.getElementById('csv-file').value = '';
+            document.getElementById('import-preview').style.display = 'none';
+            document.getElementById('import-btn').disabled = true;
+            parsedCards = [];
+        }
+        function closeImportModal() { document.getElementById('import-modal').classList.remove('active'); }
+
+        document.getElementById('csv-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const lines = ev.target.result.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 2) { alert('CSV must have a header row and at least one data row'); return; }
+
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+                const nameIdx = headers.indexOf('name');
+                const catIdx = headers.indexOf('category');
+                if (nameIdx === -1) { alert('CSV must have a "name" column'); return; }
+
+                parsedCards = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const vals = lines[i].match(/(".*?"|[^,]+)/g)?.map(v => v.trim().replace(/^"|"$/g, '')) || [];
+                    const card = {};
+                    headers.forEach((h, idx) => { if (vals[idx]) card[h] = vals[idx]; });
+                    if (card.name) {
+                        if (!card.category && catIdx === -1) card.category = 'other';
+                        parsedCards.push(card);
+                    }
+                }
+
+                const preview = document.getElementById('import-preview');
+                preview.style.display = 'block';
+                preview.innerHTML = `<strong>${parsedCards.length} cards found:</strong><br>` +
+                    parsedCards.slice(0, 10).map(c => `${c.name} — ${c.category || 'other'}${c.set_name ? ' / ' + c.set_name : ''}`).join('<br>') +
+                    (parsedCards.length > 10 ? `<br>... and ${parsedCards.length - 10} more` : '');
+                document.getElementById('import-btn').disabled = false;
+            };
+            reader.readAsText(file);
+        });
+
+        async function runImport() {
+            if (parsedCards.length === 0) return;
+            const btn = document.getElementById('import-btn');
+            btn.textContent = 'Importing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/inventory/import', {
+                method: 'POST',
+                body: JSON.stringify({ cards: parsedCards })
+            });
+
+            btn.textContent = 'Import';
+            btn.disabled = false;
+
+            if (data.success) {
+                closeImportModal();
+                loadInventory();
+                alert(`Imported ${data.imported} cards. ${data.skipped > 0 ? data.skipped + ' skipped.' : ''}`);
+            } else {
+                alert(data.error || 'Import failed');
             }
         }
 

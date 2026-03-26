@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Pricing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; text-align: center; }
+        .page-title { font-size: 2rem; margin-bottom: 8px; }
+        .page-subtitle { color: #888; font-size: 16px; margin-bottom: 3rem; }
+        .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 3rem; }
+        @media (max-width: 900px) { .plans { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .plans { grid-template-columns: 1fr; } }
+        .plan { background: #1a1a2e; border: 2px solid #2a2a3e; border-radius: 12px; padding: 28px 20px; text-align: center; transition: border-color 0.2s; position: relative; }
+        .plan:hover { border-color: #4a90d9; }
+        .plan.popular { border-color: #4a90d9; }
+        .popular-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #4a90d9; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .plan-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+        .plan-price { font-size: 2.5rem; font-weight: 800; margin: 12px 0 4px; }
+        .plan-price span { font-size: 14px; font-weight: 400; color: #888; }
+        .plan-desc { color: #888; font-size: 13px; margin-bottom: 20px; }
+        .plan-features { list-style: none; text-align: left; margin-bottom: 24px; }
+        .plan-features li { padding: 6px 0; font-size: 13px; color: #ccc; border-bottom: 1px solid #2a2a3e; display: flex; align-items: center; gap: 8px; }
+        .plan-features li:last-child { border: none; }
+        .check { color: #4caf50; font-weight: bold; }
+        .x { color: #444; }
+        .plan-btn { display: block; width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .plan-btn.free { background: #2a2a3e; color: #fff; }
+        .plan-btn.paid { background: #4a90d9; color: #fff; }
+        .plan-btn:hover { opacity: 0.9; }
+        .plan-btn.current { background: #333; color: #888; cursor: default; }
+        .faq { text-align: left; max-width: 700px; margin: 0 auto; }
+        .faq h2 { text-align: center; margin-bottom: 24px; }
+        .faq-item { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; margin-bottom: 12px; }
+        .faq-item h3 { font-size: 14px; margin-bottom: 6px; }
+        .faq-item p { color: #aaa; font-size: 13px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync</h1>
+        <div class="nav" id="nav"></div>
+    </div>
+    <div class="container">
+        <h1 class="page-title">Simple pricing for every dealer</h1>
+        <p class="page-subtitle">No transaction fees. No hidden costs. Just a flat monthly rate.</p>
+
+        <div class="plans">
+            <div class="plan" id="plan-free">
+                <div class="plan-name">Free</div>
+                <div class="plan-price">$0<span>/mo</span></div>
+                <div class="plan-desc">Get started with the basics</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Up to 250 cards</li>
+                    <li><span class="check">&#10003;</span> Inventory management</li>
+                    <li><span class="check">&#10003;</span> Public marketplace</li>
+                    <li><span class="check">&#10003;</span> Market price lookup</li>
+                    <li><span class="check">&#10003;</span> Buylist (customers sell to you)</li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">Google Sheets sync</span></li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">Bulk import</span></li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">Analytics</span></li>
+                </ul>
+                <button class="plan-btn free" onclick="selectPlan('free')">Current Plan</button>
+            </div>
+
+            <div class="plan popular" id="plan-pro">
+                <div class="popular-tag">Most Popular</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$29<span>/mo</span></div>
+                <div class="plan-desc">For growing dealers</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Up to 5,000 cards</li>
+                    <li><span class="check">&#10003;</span> Everything in Free</li>
+                    <li><span class="check">&#10003;</span> Google Sheets sync</li>
+                    <li><span class="check">&#10003;</span> Bulk CSV import</li>
+                    <li><span class="check">&#10003;</span> Analytics dashboard</li>
+                    <li><span class="check">&#10003;</span> Order tracking</li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">eBay integration</span></li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">Team access</span></li>
+                </ul>
+                <button class="plan-btn paid" onclick="selectPlan('pro')">Upgrade to Pro</button>
+            </div>
+
+            <div class="plan" id="plan-business">
+                <div class="plan-name">Business</div>
+                <div class="plan-price">$59<span>/mo</span></div>
+                <div class="plan-desc">For full-time dealers</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Up to 25,000 cards</li>
+                    <li><span class="check">&#10003;</span> Everything in Pro</li>
+                    <li><span class="check">&#10003;</span> eBay integration</li>
+                    <li><span class="check">&#10003;</span> Team members</li>
+                    <li><span class="check">&#10003;</span> Multi-user roles</li>
+                    <li><span class="check">&#10003;</span> Advanced analytics</li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">API access</span></li>
+                    <li><span class="x">&#10007;</span> <span style="color:#666;">Priority support</span></li>
+                </ul>
+                <button class="plan-btn paid" onclick="selectPlan('business')">Upgrade to Business</button>
+            </div>
+
+            <div class="plan" id="plan-shop">
+                <div class="plan-name">Shop</div>
+                <div class="plan-price">$99<span>/mo</span></div>
+                <div class="plan-desc">For card shops & stores</div>
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> Unlimited cards</li>
+                    <li><span class="check">&#10003;</span> Everything in Business</li>
+                    <li><span class="check">&#10003;</span> API access</li>
+                    <li><span class="check">&#10003;</span> Priority support</li>
+                    <li><span class="check">&#10003;</span> Custom branding</li>
+                    <li><span class="check">&#10003;</span> Dedicated onboarding</li>
+                    <li><span class="check">&#10003;</span> Multi-location</li>
+                    <li><span class="check">&#10003;</span> Everything, unlimited</li>
+                </ul>
+                <button class="plan-btn paid" onclick="selectPlan('shop')">Upgrade to Shop</button>
+            </div>
+        </div>
+
+        <div class="faq">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <h3>Are there any transaction fees?</h3>
+                <p>No. Zero transaction fees on any plan. You keep 100% of your sales.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I upgrade or downgrade anytime?</h3>
+                <p>Yes. Change your plan at any time. Upgrades take effect immediately. Downgrades take effect at the end of your billing period.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What counts as a "card" toward my limit?</h3>
+                <p>Each unique line item in your inventory counts as one card, regardless of quantity. If you have 10 copies of the same card, that's 1 card toward your limit.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What card types are supported?</h3>
+                <p>All types: Pokemon, Magic: The Gathering, Yu-Gi-Oh!, sports cards, Lorcana, One Piece, Digimon, and more. If it's a card, we support it.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Do I need a credit card for the free plan?</h3>
+                <p>No. Sign up and start using Card Sync for free. No credit card required.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        const nav = document.getElementById('nav');
+
+        if (token) {
+            nav.innerHTML = '<a href="admin.html" class="btn">Dashboard</a>';
+            loadCurrentPlan();
+        } else {
+            nav.innerHTML = '<a href="login.html" class="btn btn-primary">Sign Up Free</a>';
+        }
+
+        async function loadCurrentPlan() {
+            const res = await fetch('/api/subscription', { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            if (!data.success) return;
+
+            const current = data.plan.id;
+            document.querySelectorAll('.plan-btn').forEach(btn => {
+                const planId = btn.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+                if (planId === current) {
+                    btn.textContent = 'Current Plan';
+                    btn.className = 'plan-btn current';
+                    btn.onclick = null;
+                }
+            });
+        }
+
+        async function selectPlan(planId) {
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (planId !== 'free') {
+                // TODO: PayPal/Stripe checkout flow
+                if (!confirm(`Upgrade to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan? (Payment integration coming soon — plan will be activated for testing.)`)) return;
+            }
+
+            const res = await fetch('/api/subscription', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: planId }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert('Plan updated to ' + data.plan.name + '!');
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to update plan');
+            }
+        }
+    </script>
+</body>
+</html>
