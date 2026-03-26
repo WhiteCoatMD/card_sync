@@ -4,3 +4,6 @@ node_modules/
 .env.production
 .vercel/
 *.log
+google-credentials.json
+
+.vercel

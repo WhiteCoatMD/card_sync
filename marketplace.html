@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+        .toolbar input, .toolbar select { padding: 8px 12px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; }
+        .toolbar input:focus, .toolbar select:focus { outline: none; border-color: #4a90d9; }
+        .toolbar input[type="text"] { width: 250px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .card { background: #1a1a2e; border-radius: 10px; border: 1px solid #2a2a3e; overflow: hidden; transition: transform 0.15s, border-color 0.15s; }
+        .card:hover { transform: translateY(-2px); border-color: #4a90d9; }
+        .card-img { width: 100%; height: 200px; background: #12122a; display: flex; align-items: center; justify-content: center; color: #444; font-size: 48px; overflow: hidden; }
+        .card-img img { width: 100%; height: 100%; object-fit: contain; }
+        .card-body { padding: 16px; }
+        .card-body h3 { font-size: 15px; margin-bottom: 6px; }
+        .card-meta { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .card-meta span { margin-right: 10px; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .card-price { font-size: 20px; font-weight: 700; color: #4caf50; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-condition { background: rgba(74,144,217,0.2); color: #4a90d9; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
+        .empty { text-align: center; padding: 3rem; color: #666; }
+        .stats { display: flex; gap: 16px; margin-bottom: 1.5rem; }
+        .stat-badge { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #aaa; cursor: pointer; }
+        .stat-badge.active { border-color: #4a90d9; color: #fff; }
+        .stat-badge strong { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync — Marketplace</h1>
+        <div class="nav" id="nav-links"></div>
+    </div>
+
+    <div class="container">
+        <div class="stats" id="category-badges"></div>
+
+        <div class="toolbar">
+            <input type="text" id="search" placeholder="Search cards..." oninput="debounceLoad()">
+            <select id="filter-condition" onchange="loadMarketplace()">
+                <option value="">All Conditions</option>
+                <option value="mint">Mint</option>
+                <option value="near_mint">Near Mint</option>
+                <option value="lightly_played">Lightly Played</option>
+                <option value="moderately_played">Moderately Played</option>
+                <option value="heavily_played">Heavily Played</option>
+                <option value="damaged">Damaged</option>
+            </select>
+            <select id="sort" onchange="loadMarketplace()">
+                <option value="created_at-desc">Newest First</option>
+                <option value="created_at-asc">Oldest First</option>
+                <option value="sell_price-asc">Price: Low to High</option>
+                <option value="sell_price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A-Z</option>
+                <option value="name-desc">Name: Z-A</option>
+            </select>
+        </div>
+
+        <div class="cards-grid" id="cards-grid"></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        // Show admin links if logged in
+        const token = localStorage.getItem('auth_token');
+        const nav = document.getElementById('nav-links');
+        if (token) {
+            nav.innerHTML = '<a href="admin.html" class="btn">Dashboard</a><a href="inventory.html" class="btn">Inventory</a><a href="orders.html" class="btn">Orders</a><a href="integrations.html" class="btn">Integrations</a>';
+        } else {
+            nav.innerHTML = '<a href="login.html" class="btn btn-primary">Log In</a>';
+        }
+
+        let currentPage = 1;
+        let selectedCategory = '';
+        let debounceTimer;
+
+        function debounceLoad() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => { currentPage = 1; loadMarketplace(); }, 300);
+        }
+
+        const conditionLabels = { mint: 'Mint', near_mint: 'Near Mint', lightly_played: 'Lightly Played', moderately_played: 'Mod. Played', heavily_played: 'Heavily Played', damaged: 'Damaged' };
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function selectCategory(cat) {
+            selectedCategory = selectedCategory === cat ? '' : cat;
+            currentPage = 1;
+            loadMarketplace();
+            renderCategoryBadges();
+        }
+
+        function renderCategoryBadges() {
+            document.querySelectorAll('.stat-badge').forEach(b => {
+                b.classList.toggle('active', b.dataset.cat === selectedCategory);
+            });
+        }
+
+        async function loadMarketplace() {
+            const params = new URLSearchParams({ page: currentPage, limit: 50 });
+            const search = document.getElementById('search').value;
+            const condition = document.getElementById('filter-condition').value;
+            const [sort, order] = document.getElementById('sort').value.split('-');
+
+            if (search) params.set('search', search);
+            if (selectedCategory) params.set('category', selectedCategory);
+            if (condition) params.set('condition', condition);
+            params.set('sort', sort);
+            params.set('order', order);
+
+            const data = await fetch(`/api/public/marketplace?${params}`).then(r => r.json());
+            const grid = document.getElementById('cards-grid');
+
+            // Render category badges
+            if (data.categories) {
+                const badges = document.getElementById('category-badges');
+                badges.innerHTML = data.categories.map(c =>
+                    `<div class="stat-badge${selectedCategory === c.category ? ' active' : ''}" data-cat="${esc(c.category)}" onclick="selectCategory('${esc(c.category)}')">
+                        <strong>${c.count}</strong> ${esc(c.category.charAt(0).toUpperCase() + c.category.slice(1))}
+                    </div>`
+                ).join('');
+            }
+
+            if (!data.success || data.cards.length === 0) {
+                grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">No cards found matching your search.</div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            grid.innerHTML = data.cards.map(card => `
+                <div class="card">
+                    <div class="card-img">
+                        ${card.image_url
+                            ? `<img src="${esc(card.image_url)}" alt="${esc(card.name)}">`
+                            : '&#127183;'}
+                    </div>
+                    <div class="card-body">
+                        <h3>${esc(card.name)}</h3>
+                        <div class="card-meta">
+                            <span>${esc(card.category)}</span>
+                            ${card.set_name ? `<span>${esc(card.set_name)}</span>` : ''}
+                            ${card.card_number ? `<span>#${esc(card.card_number)}</span>` : ''}
+                            ${card.rarity ? `<span>${esc(card.rarity)}</span>` : ''}
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-price">${card.sell_price ? '$' + parseFloat(card.sell_price).toFixed(2) : 'Price TBD'}</span>
+                            <span class="badge badge-condition">${conditionLabels[card.condition] || card.condition}</span>
+                        </div>
+                        ${card.quantity > 1 ? `<div style="font-size:12px;color:#888;margin-top:6px;">${card.quantity} available</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Pagination
+            const pages = Math.ceil(data.total / data.limit);
+            if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `<button class="btn btn-sm${i === data.page ? ' btn-primary' : ''}" onclick="currentPage=${i};loadMarketplace()">${i}</button>`;
+            }
+            document.getElementById('pagination').innerHTML = html;
+        }
+
+        loadMarketplace();
+    </script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Inventory</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .btn-danger:hover { background: #c83a3a; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+        .toolbar input, .toolbar select { padding: 8px 12px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; }
+        .toolbar input:focus, .toolbar select:focus { outline: none; border-color: #4a90d9; }
+        .toolbar input[type="text"] { width: 250px; }
+        table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #2a2a3e; font-size: 14px; }
+        th { background: #12122a; color: #aaa; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-available { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .badge-sold { background: rgba(244,67,54,0.2); color: #f44336; }
+        .badge-reserved { background: rgba(255,152,0,0.2); color: #ff9800; }
+        .badge-unlisted { background: rgba(158,158,158,0.2); color: #9e9e9e; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
+        .empty { text-align: center; padding: 3rem; color: #666; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a2e; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { margin-bottom: 20px; font-size: 1.2rem; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4a90d9; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .price { color: #4caf50; font-weight: 600; }
+        .price-buy { color: #ff9800; }
+        .price-market { color: #9c27b0; font-weight: 600; font-size: 13px; }
+        .price-diff { font-size: 11px; display: block; }
+        .price-diff.above { color: #4caf50; }
+        .price-diff.below { color: #f44336; }
+        .btn-price { background: #9c27b0; border-color: #9c27b0; }
+        .btn-price:hover { background: #7b1fa2; }
+        .price-loading { color: #666; font-style: italic; font-size: 12px; }
+
+        /* Price lookup in modal */
+        .price-lookup-bar { background: #0d0d1a; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+        .price-lookup-bar .lookup-result { margin-top: 8px; font-size: 13px; color: #aaa; }
+        .price-lookup-bar .lookup-price { color: #9c27b0; font-weight: 600; font-size: 16px; }
+        .price-lookup-bar .lookup-source { font-size: 11px; color: #666; }
+        .price-lookup-bar .lookup-img { width: 60px; height: 84px; object-fit: contain; border-radius: 4px; margin-right: 10px; vertical-align: middle; }
+
+        /* Sheets sync bar */
+        .sync-bar { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 16px 20px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .sync-bar .sync-info { display: flex; align-items: center; gap: 12px; }
+        .sync-bar .sync-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .sync-dot.connected { background: #4caf50; }
+        .sync-dot.disconnected { background: #666; }
+        .sync-bar .sync-text { font-size: 13px; color: #aaa; }
+        .sync-bar .sync-text strong { color: #fff; }
+        .sync-actions { display: flex; gap: 8px; }
+        .btn-sheets { background: #0f9d58; border-color: #0f9d58; }
+        .btn-sheets:hover { background: #0b8043; }
+
+        /* Connect Sheet Modal */
+        .sheet-modal { max-width: 500px; }
+        .sheet-modal .help-text { font-size: 12px; color: #888; margin-top: 4px; }
+        .sheet-modal .service-email { background: #0d0d1a; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #4a90d9; word-break: break-all; margin: 8px 0; user-select: all; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync — Inventory</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a href="marketplace.html" class="btn">Marketplace</a>
+            <a href="integrations.html" class="btn">Integrations</a>
+            <button class="btn btn-price" onclick="checkAllPrices()">Check Market Prices</button>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Card</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Google Sheets Sync Bar -->
+        <div class="sync-bar" id="sync-bar">
+            <div class="sync-info">
+                <div class="sync-dot disconnected" id="sync-dot"></div>
+                <div class="sync-text" id="sync-text">Google Sheets: <strong>Not connected</strong></div>
+            </div>
+            <div class="sync-actions" id="sync-actions">
+                <button class="btn btn-sheets" onclick="openSheetModal()">Connect Google Sheet</button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" id="search" placeholder="Search cards..." oninput="debounceLoad()">
+            <select id="filter-category" onchange="loadInventory()">
+                <option value="">All Categories</option>
+            </select>
+            <select id="filter-status" onchange="loadInventory()">
+                <option value="">All Status</option>
+                <option value="available">Available</option>
+                <option value="sold">Sold</option>
+                <option value="reserved">Reserved</option>
+                <option value="unlisted">Unlisted</option>
+            </select>
+            <select id="filter-condition" onchange="loadInventory()">
+                <option value="">All Conditions</option>
+                <option value="mint">Mint</option>
+                <option value="near_mint">Near Mint</option>
+                <option value="lightly_played">Lightly Played</option>
+                <option value="moderately_played">Moderately Played</option>
+                <option value="heavily_played">Heavily Played</option>
+                <option value="damaged">Damaged</option>
+            </select>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Card</th>
+                    <th>Category</th>
+                    <th>Set</th>
+                    <th>Rarity</th>
+                    <th>Condition</th>
+                    <th>Qty</th>
+                    <th>Buy Price</th>
+                    <th>Sell Price</th>
+                    <th>Market Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-body">
+            </tbody>
+        </table>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h2 id="modal-title">Add Card</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="field-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="field-category">
+                        <option value="pokemon">Pokemon</option>
+                        <option value="magic">Magic: The Gathering</option>
+                        <option value="yugioh">Yu-Gi-Oh!</option>
+                        <option value="sports">Sports</option>
+                        <option value="one_piece">One Piece</option>
+                        <option value="digimon">Digimon</option>
+                        <option value="dragonball">Dragon Ball</option>
+                        <option value="flesh_and_blood">Flesh and Blood</option>
+                        <option value="lorcana">Lorcana</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Set Name</label>
+                    <input type="text" id="field-set_name">
+                </div>
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <input type="text" id="field-card_number">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rarity</label>
+                    <input type="text" id="field-rarity" placeholder="e.g. Common, Rare, Ultra Rare">
+                </div>
+                <div class="form-group">
+                    <label>Condition</label>
+                    <select id="field-condition">
+                        <option value="mint">Mint</option>
+                        <option value="near_mint" selected>Near Mint</option>
+                        <option value="lightly_played">Lightly Played</option>
+                        <option value="moderately_played">Moderately Played</option>
+                        <option value="heavily_played">Heavily Played</option>
+                        <option value="damaged">Damaged</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="field-quantity" value="1" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Buy Price ($)</label>
+                    <input type="number" id="field-buy_price" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Sell Price ($)</label>
+                    <input type="number" id="field-sell_price" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="text" id="field-image_url" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="field-status">
+                        <option value="available">Available</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="unlisted">Unlisted</option>
+                        <option value="sold">Sold</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="field-description" placeholder="Any notes about this card..."></textarea>
+            </div>
+            <div class="price-lookup-bar">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <strong style="font-size:13px;color:#aaa;">Market Price Lookup</strong>
+                    <button class="btn btn-sm btn-price" onclick="lookupModalPrice()">Look Up Price</button>
+                </div>
+                <div class="lookup-result" id="lookup-result" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+                        <img id="lookup-img" class="lookup-img" style="display:none;">
+                        <div>
+                            <span class="lookup-price" id="lookup-price"></span>
+                            <span class="lookup-source" id="lookup-source"></span>
+                            <button class="btn btn-sm" style="margin-left:8px;" onclick="applyLookupPrice()">Use as Sell Price</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCard()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect Sheet Modal -->
+    <div class="modal-overlay" id="sheet-modal">
+        <div class="modal sheet-modal">
+            <h2>Connect Google Sheet</h2>
+            <p style="color:#aaa;font-size:13px;margin-bottom:16px;">Link a Google Sheet to sync your inventory automatically. Share your sheet with this service account email as <strong>Editor</strong>:</p>
+            <div class="service-email">card-sync-sheets@card-sync-491400.iam.gserviceaccount.com</div>
+            <div class="form-group" style="margin-top:16px;">
+                <label>Google Sheet URL or ID *</label>
+                <input type="text" id="sheet-id-input" placeholder="Paste sheet URL or ID here...">
+                <div class="help-text">The URL looks like: docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit</div>
+            </div>
+            <div class="form-row" style="margin-top:14px;">
+                <div class="form-group">
+                    <label>Sheet Name (optional)</label>
+                    <input type="text" id="sheet-name-input" placeholder="My Inventory">
+                </div>
+                <div class="form-group">
+                    <label>Tab Name</label>
+                    <input type="text" id="sheet-tab-input" placeholder="Sheet1" value="Sheet1">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeSheetModal()">Cancel</button>
+                <button class="btn btn-sheets" onclick="connectSheet()">Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        const API = '/api/inventory';
+        let currentPage = 1;
+        let debounceTimer;
+
+        function debounceLoad() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => { currentPage = 1; loadInventory(); }, 300);
+        }
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers }
+            });
+            return res.json();
+        }
+
+        async function loadInventory() {
+            const params = new URLSearchParams({ page: currentPage, limit: 50 });
+            const search = document.getElementById('search').value;
+            const category = document.getElementById('filter-category').value;
+            const status = document.getElementById('filter-status').value;
+            const condition = document.getElementById('filter-condition').value;
+
+            if (search) params.set('search', search);
+            if (category) params.set('category', category);
+            if (status) params.set('status', status);
+            if (condition) params.set('condition', condition);
+
+            const data = await apiFetch(`${API}?${params}`);
+            const tbody = document.getElementById('inventory-body');
+
+            if (!data.success || data.inventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="empty">No cards found. Click "+ Add Card" to get started.</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = data.inventory.map(item => `
+                <tr>
+                    <td><strong>${esc(item.name)}</strong>${item.card_number ? ' <span style="color:#666">#' + esc(item.card_number) + '</span>' : ''}</td>
+                    <td>${esc(item.category)}</td>
+                    <td>${esc(item.set_name || '—')}</td>
+                    <td>${esc(item.rarity || '—')}</td>
+                    <td>${formatCondition(item.condition)}</td>
+                    <td>${item.quantity}</td>
+                    <td class="price-buy">${item.buy_price ? '$' + parseFloat(item.buy_price).toFixed(2) : '—'}</td>
+                    <td class="price">${item.sell_price ? '$' + parseFloat(item.sell_price).toFixed(2) : '—'}</td>
+                    <td id="market-${item.id}" class="price-market"><span class="price-loading">—</span></td>
+                    <td><span class="badge badge-${item.status}">${item.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm" onclick="editCard(${item.id})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCard(${item.id})">Del</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination(data.total, data.page, data.limit);
+        }
+
+        function renderPagination(total, page, limit) {
+            const pages = Math.ceil(total / limit);
+            if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `<button class="btn btn-sm${i === page ? ' btn-primary' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            document.getElementById('pagination').innerHTML = html;
+        }
+
+        function goToPage(p) { currentPage = p; loadInventory(); }
+
+        function formatCondition(c) {
+            const map = { mint: 'Mint', near_mint: 'Near Mint', lightly_played: 'Lightly Played', moderately_played: 'Mod. Played', heavily_played: 'Heavily Played', damaged: 'Damaged' };
+            return map[c] || c || '—';
+        }
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Add Card';
+            document.getElementById('edit-id').value = '';
+            ['name', 'set_name', 'card_number', 'rarity', 'buy_price', 'sell_price', 'image_url', 'description'].forEach(f =>
+                document.getElementById('field-' + f).value = ''
+            );
+            document.getElementById('field-category').value = 'pokemon';
+            document.getElementById('field-condition').value = 'near_mint';
+            document.getElementById('field-quantity').value = '1';
+            document.getElementById('field-status').value = 'available';
+            document.getElementById('modal').classList.add('active');
+        }
+
+        async function editCard(id) {
+            const data = await apiFetch(`${API}/${id}`);
+            if (!data.success) return alert('Failed to load card');
+
+            const item = data.item;
+            document.getElementById('modal-title').textContent = 'Edit Card';
+            document.getElementById('edit-id').value = id;
+            ['name', 'set_name', 'card_number', 'rarity', 'buy_price', 'sell_price', 'image_url', 'description'].forEach(f =>
+                document.getElementById('field-' + f).value = item[f] || ''
+            );
+            document.getElementById('field-category').value = item.category || 'pokemon';
+            document.getElementById('field-condition').value = item.condition || 'near_mint';
+            document.getElementById('field-quantity').value = item.quantity || 1;
+            document.getElementById('field-status').value = item.status || 'available';
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+        async function saveCard() {
+            const id = document.getElementById('edit-id').value;
+            const body = {
+                name: document.getElementById('field-name').value,
+                category: document.getElementById('field-category').value,
+                set_name: document.getElementById('field-set_name').value || null,
+                card_number: document.getElementById('field-card_number').value || null,
+                rarity: document.getElementById('field-rarity').value || null,
+                condition: document.getElementById('field-condition').value,
+                quantity: parseInt(document.getElementById('field-quantity').value) || 1,
+                buy_price: parseFloat(document.getElementById('field-buy_price').value) || null,
+                sell_price: parseFloat(document.getElementById('field-sell_price').value) || null,
+                image_url: document.getElementById('field-image_url').value || null,
+                description: document.getElementById('field-description').value || null,
+                status: document.getElementById('field-status').value
+            };
+
+            if (!body.name || !body.category) return alert('Name and category are required');
+
+            const url = id ? `${API}/${id}` : API;
+            const method = id ? 'PUT' : 'POST';
+
+            const data = await apiFetch(url, { method, body: JSON.stringify(body) });
+            if (data.success) {
+                closeModal();
+                loadInventory();
+            } else {
+                alert(data.error || 'Failed to save');
+            }
+        }
+
+        async function deleteCard(id) {
+            if (!confirm('Delete this card from inventory?')) return;
+            const data = await apiFetch(`${API}/${id}`, { method: 'DELETE' });
+            if (data.success) loadInventory();
+            else alert(data.error || 'Failed to delete');
+        }
+
+        // Load categories dynamically
+        async function loadCategories() {
+            const data = await fetch('/api/public/marketplace').then(r => r.json());
+            if (data.success && data.categories) {
+                const sel = document.getElementById('filter-category');
+                data.categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.category;
+                    opt.textContent = c.category.charAt(0).toUpperCase() + c.category.slice(1) + ` (${c.count})`;
+                    sel.appendChild(opt);
+                });
+            }
+        }
+
+        // --- Market Price Lookup ---
+        let lastLookupPrice = null;
+
+        async function checkAllPrices() {
+            const btn = event.target;
+            btn.textContent = 'Checking...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/pricing/lookup', {
+                method: 'POST',
+                body: JSON.stringify({ all: true })
+            });
+
+            btn.textContent = 'Check Market Prices';
+            btn.disabled = false;
+
+            if (data.success) {
+                for (const p of data.prices) {
+                    const cell = document.getElementById('market-' + p.item_id);
+                    if (!cell) continue;
+
+                    if (!p.found || p.market_price === null) {
+                        cell.innerHTML = '<span class="price-loading">N/A</span>';
+                        continue;
+                    }
+
+                    const market = parseFloat(p.market_price);
+                    let diffHtml = '';
+                    if (p.current_sell_price) {
+                        const sell = parseFloat(p.current_sell_price);
+                        const diff = sell - market;
+                        const pct = ((diff / market) * 100).toFixed(0);
+                        if (diff > 0) {
+                            diffHtml = '<span class="price-diff above">+$' + diff.toFixed(2) + ' (' + pct + '%)</span>';
+                        } else if (diff < 0) {
+                            diffHtml = '<span class="price-diff below">-$' + Math.abs(diff).toFixed(2) + ' (' + pct + '%)</span>';
+                        }
+                    }
+
+                    cell.innerHTML = '$' + market.toFixed(2) + diffHtml +
+                        '<span style="display:block;font-size:10px;color:#666;">' + (p.source || '') + '</span>';
+                }
+            } else {
+                alert(data.error || 'Failed to check prices');
+            }
+        }
+
+        async function lookupModalPrice() {
+            const name = document.getElementById('field-name').value;
+            const category = document.getElementById('field-category').value;
+            const setName = document.getElementById('field-set_name').value;
+
+            if (!name) return alert('Enter a card name first');
+
+            const btn = event.target;
+            btn.textContent = 'Looking up...';
+            btn.disabled = true;
+
+            const params = new URLSearchParams({ name });
+            if (category) params.set('category', category);
+            if (setName) params.set('set_name', setName);
+
+            const data = await apiFetch('/api/pricing/search?' + params);
+
+            btn.textContent = 'Look Up Price';
+            btn.disabled = false;
+
+            const resultDiv = document.getElementById('lookup-result');
+            const priceEl = document.getElementById('lookup-price');
+            const sourceEl = document.getElementById('lookup-source');
+            const imgEl = document.getElementById('lookup-img');
+
+            if (data.success && data.results.length > 0) {
+                const best = data.results[0];
+                lastLookupPrice = best.market_price;
+
+                priceEl.textContent = best.market_price !== null ? '$' + parseFloat(best.market_price).toFixed(2) : 'N/A';
+                if (best.foil_price) {
+                    priceEl.textContent += ' (Foil: $' + parseFloat(best.foil_price).toFixed(2) + ')';
+                }
+                sourceEl.textContent = ' via ' + best.source;
+
+                if (best.image_url) {
+                    imgEl.src = best.image_url;
+                    imgEl.style.display = 'block';
+                    // Also populate the image URL field
+                    if (!document.getElementById('field-image_url').value) {
+                        document.getElementById('field-image_url').value = best.image_url;
+                    }
+                } else {
+                    imgEl.style.display = 'none';
+                }
+
+                resultDiv.style.display = 'block';
+            } else {
+                priceEl.textContent = 'No pricing found';
+                sourceEl.textContent = '';
+                imgEl.style.display = 'none';
+                resultDiv.style.display = 'block';
+                lastLookupPrice = null;
+            }
+        }
+
+        function applyLookupPrice() {
+            if (lastLookupPrice !== null) {
+                document.getElementById('field-sell_price').value = parseFloat(lastLookupPrice).toFixed(2);
+            }
+        }
+
+        // --- Google Sheets Integration ---
+        function openSheetModal() { document.getElementById('sheet-modal').classList.add('active'); }
+        function closeSheetModal() { document.getElementById('sheet-modal').classList.remove('active'); }
+
+        function extractSheetId(input) {
+            if (!input) return null;
+            // Extract ID from URL if needed
+            const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) return match[1];
+            // Assume it's already an ID if no slashes
+            if (!input.includes('/')) return input.trim();
+            return null;
+        }
+
+        async function connectSheet() {
+            const rawInput = document.getElementById('sheet-id-input').value;
+            const sheetId = extractSheetId(rawInput);
+            if (!sheetId) return alert('Please enter a valid Google Sheet URL or ID');
+
+            const body = {
+                sheet_id: sheetId,
+                sheet_name: document.getElementById('sheet-name-input').value || 'My Inventory',
+                tab_name: document.getElementById('sheet-tab-input').value || 'Sheet1'
+            };
+
+            const data = await apiFetch('/api/sheets/connect', { method: 'POST', body: JSON.stringify(body) });
+            if (data.success) {
+                closeSheetModal();
+                loadSheetStatus();
+                alert('Sheet connected! You can now sync your inventory.');
+            } else {
+                alert(data.error || 'Failed to connect sheet');
+            }
+        }
+
+        async function loadSheetStatus() {
+            const data = await apiFetch('/api/sheets/status');
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-text');
+            const actions = document.getElementById('sync-actions');
+
+            if (data.success && data.connected) {
+                const conn = data.connections[0];
+                dot.className = 'sync-dot connected';
+                let statusText = `Google Sheets: <strong>${conn.sheet_name || 'Connected'}</strong>`;
+                if (conn.last_synced_at) {
+                    statusText += ` &mdash; Last synced: ${new Date(conn.last_synced_at).toLocaleString()}`;
+                }
+                if (conn.last_sync_status === 'error') {
+                    statusText += ' <span style="color:#f44;">(last sync failed)</span>';
+                }
+                text.innerHTML = statusText;
+                actions.innerHTML = `
+                    <button class="btn btn-sheets" onclick="syncSheet('push')">Push to Sheet</button>
+                    <button class="btn btn-sheets" onclick="syncSheet('pull')">Pull from Sheet</button>
+                    <button class="btn btn-sheets" onclick="syncSheet('both')">Sync Both</button>
+                    <button class="btn btn-sm btn-danger" onclick="disconnectSheet()">Disconnect</button>
+                `;
+            } else {
+                dot.className = 'sync-dot disconnected';
+                text.innerHTML = 'Google Sheets: <strong>Not connected</strong>';
+                actions.innerHTML = '<button class="btn btn-sheets" onclick="openSheetModal()">Connect Google Sheet</button>';
+            }
+        }
+
+        async function syncSheet(direction) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Syncing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/sheets/sync', {
+                method: 'POST',
+                body: JSON.stringify({ direction })
+            });
+
+            btn.textContent = originalText;
+            btn.disabled = false;
+
+            if (data.success) {
+                loadSheetStatus();
+                loadInventory();
+                const s = data.sync;
+                if (direction === 'push') {
+                    alert(`Pushed ${s.pushed} cards to Google Sheet.`);
+                } else if (direction === 'pull') {
+                    alert(`Pulled from Sheet: ${s.updated} updated, ${s.inserted} new, ${s.unlisted} unlisted.`);
+                } else {
+                    alert(`Synced! Pulled: ${s.pulled.updated} updated, ${s.pulled.inserted} new. Pushed ${s.pushed} cards back.`);
+                }
+            } else {
+                alert(data.error || 'Sync failed');
+            }
+        }
+
+        async function disconnectSheet() {
+            if (!confirm('Disconnect Google Sheet? Your inventory data will remain in Card Sync.')) return;
+            const data = await apiFetch('/api/sheets/status', { method: 'DELETE' });
+            if (data.success) loadSheetStatus();
+        }
+
+        loadCategories();
+        loadInventory();
+        loadSheetStatus();
+    </script>
+</body>
+</html>

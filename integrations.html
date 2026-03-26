@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Sync — Integrations</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-sheets { background: #0f9d58; border-color: #0f9d58; }
+        .btn-sheets:hover { background: #0b8043; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .btn-danger:hover { background: #c83a3a; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #888; font-size: 14px; margin-bottom: 2rem; }
+
+        /* Integration Card */
+        .integration-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 28px; margin-bottom: 20px; }
+        .integration-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+        .integration-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .icon-sheets { background: rgba(15,157,88,0.15); }
+        .integration-header h2 { font-size: 1.1rem; }
+        .integration-header .tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
+        .tag-connected { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .tag-not-connected { background: rgba(158,158,158,0.2); color: #9e9e9e; }
+        .integration-desc { color: #aaa; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+        /* Status bar */
+        .status-bar { background: #12122a; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .status-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #aaa; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.on { background: #4caf50; }
+        .status-dot.off { background: #666; }
+        .status-actions { display: flex; gap: 8px; }
+
+        /* Steps */
+        .steps { margin-top: 24px; }
+        .steps h3 { font-size: 14px; color: #fff; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .step { display: flex; gap: 16px; margin-bottom: 20px; }
+        .step-number { width: 32px; height: 32px; border-radius: 50%; background: #4a90d9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+        .step-content { flex: 1; }
+        .step-content h4 { font-size: 14px; margin-bottom: 4px; }
+        .step-content p { font-size: 13px; color: #aaa; line-height: 1.6; }
+        .step-content code { background: #0d0d1a; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #4a90d9; }
+        .service-email-box { background: #0d0d1a; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; margin: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .service-email-box .email { font-size: 13px; color: #4a90d9; word-break: break-all; user-select: all; }
+        .service-email-box button { flex-shrink: 0; }
+
+        /* Connect form */
+        .connect-form { background: #12122a; border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .connect-form h3 { font-size: 14px; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #4a90d9; }
+        .form-group .help { font-size: 11px; color: #666; margin-top: 4px; }
+        .connect-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+        /* Coming soon cards */
+        .coming-soon { opacity: 0.5; }
+        .coming-soon .tag-soon { background: rgba(255,152,0,0.2); color: #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Card Sync</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a href="marketplace.html" class="btn">Marketplace</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Integrations</h1>
+        <p class="page-subtitle">Connect external tools to keep your inventory in sync automatically.</p>
+
+        <!-- Google Sheets Integration -->
+        <div class="integration-card" id="sheets-card">
+            <div class="integration-header">
+                <div class="integration-icon icon-sheets">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="1" width="18" height="22" rx="2" fill="#0f9d58"/>
+                        <rect x="6" y="6" width="12" height="12" rx="1" fill="#fff"/>
+                        <line x1="6" y1="10" x2="18" y2="10" stroke="#0f9d58" stroke-width="1"/>
+                        <line x1="6" y1="14" x2="18" y2="14" stroke="#0f9d58" stroke-width="1"/>
+                        <line x1="12" y1="6" x2="12" y2="18" stroke="#0f9d58" stroke-width="1"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Google Sheets <span class="tag tag-not-connected" id="sheets-tag">Not Connected</span></h2>
+                </div>
+            </div>
+
+            <p class="integration-desc">
+                Sync your Card Sync inventory with a Google Sheet. Any changes you make in the sheet will update your inventory, and vice versa. Great for managing inventory on the go or sharing with your team.
+            </p>
+
+            <!-- Connection Status -->
+            <div class="status-bar" id="sheets-status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="sheets-dot"></div>
+                    <span id="sheets-status-text">No sheet connected</span>
+                </div>
+                <div class="status-actions" id="sheets-status-actions"></div>
+            </div>
+
+            <!-- Setup Steps -->
+            <div class="steps">
+                <h3>How to Connect</h3>
+
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Create a Google Sheet</h4>
+                        <p>Go to <a href="https://sheets.google.com" target="_blank" style="color:#4a90d9;">sheets.google.com</a> and create a new blank spreadsheet. You can name it anything you like (e.g. "My Card Inventory").</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Share it with Card Sync</h4>
+                        <p>Click the <strong>Share</strong> button in your Google Sheet, then add this email address as an <strong>Editor</strong>:</p>
+                        <div class="service-email-box">
+                            <span class="email">card-sync-sheets@card-sync-491400.iam.gserviceaccount.com</span>
+                            <button class="btn btn-sm" onclick="copyEmail()">Copy</button>
+                        </div>
+                        <p style="margin-top:6px;">Make sure to select <strong>"Editor"</strong> (not Viewer) so Card Sync can write to your sheet.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Paste your Sheet URL below</h4>
+                        <p>Copy the full URL from your browser's address bar and paste it into the connection form below. It looks like:<br>
+                        <code>https://docs.google.com/spreadsheets/d/abc123.../edit</code></p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Connect and sync</h4>
+                        <p>Click <strong>Connect Sheet</strong> and Card Sync will verify access. Then use the sync buttons to push your inventory to the sheet or pull changes back. Your sheet headers will be set up automatically.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connect Form -->
+            <div class="connect-form" id="connect-form">
+                <h3>Connect Your Sheet</h3>
+                <div class="form-group">
+                    <label>Google Sheet URL or ID</label>
+                    <input type="text" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit">
+                    <div class="help">Paste the full URL from your browser, or just the sheet ID</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sheet Name (optional)</label>
+                        <input type="text" id="sheet-name" placeholder="My Card Inventory">
+                        <div class="help">A friendly name to identify this sheet</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tab Name</label>
+                        <input type="text" id="sheet-tab" placeholder="Sheet1" value="Sheet1">
+                        <div class="help">Which tab in the spreadsheet to sync with</div>
+                    </div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn btn-sheets" onclick="connectSheet()">Connect Sheet</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon: PayPal -->
+        <div class="integration-card coming-soon">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(0,112,187,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 21L8.5 13H12C16 13 18 10 18 7C18 4 16 3 13 3H6L3 21H7Z" stroke="#0070BA" stroke-width="2" fill="none"/>
+                        <path d="M10 17L11 11H14C17 11 19 9 19 7" stroke="#003087" stroke-width="2" fill="none"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>PayPal <span class="tag tag-soon">Coming Soon</span></h2>
+                </div>
+            </div>
+            <p class="integration-desc">Accept payments directly through your Card Sync marketplace with PayPal checkout integration.</p>
+        </div>
+
+        <!-- Coming Soon: eBay -->
+        <div class="integration-card coming-soon">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(226,38,28,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <text x="4" y="17" font-size="14" font-weight="bold" fill="#e2261c">eB</text>
+                    </svg>
+                </div>
+                <div>
+                    <h2>eBay <span class="tag tag-soon">Coming Soon</span></h2>
+                </div>
+            </div>
+            <p class="integration-desc">List your Card Sync inventory on eBay automatically and keep stock levels in sync across platforms.</p>
+        </div>
+
+        <!-- Coming Soon: TCGplayer -->
+        <div class="integration-card coming-soon">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(255,102,0,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <text x="3" y="17" font-size="12" font-weight="bold" fill="#ff6600">TCG</text>
+                    </svg>
+                </div>
+                <div>
+                    <h2>TCGplayer <span class="tag tag-soon">Coming Soon</span></h2>
+                </div>
+            </div>
+            <p class="integration-desc">Import pricing data from TCGplayer and cross-list your inventory on their marketplace.</p>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        const SERVICE_EMAIL = 'card-sync-sheets@card-sync-491400.iam.gserviceaccount.com';
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers }
+            });
+            return res.json();
+        }
+
+        function copyEmail() {
+            navigator.clipboard.writeText(SERVICE_EMAIL).then(() => {
+                const btn = event.target;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        function extractSheetId(input) {
+            if (!input) return null;
+            const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) return match[1];
+            if (!input.includes('/')) return input.trim();
+            return null;
+        }
+
+        async function connectSheet() {
+            const rawInput = document.getElementById('sheet-url').value;
+            const sheetId = extractSheetId(rawInput);
+            if (!sheetId) return alert('Please enter a valid Google Sheet URL or ID');
+
+            const body = {
+                sheet_id: sheetId,
+                sheet_name: document.getElementById('sheet-name').value || 'My Inventory',
+                tab_name: document.getElementById('sheet-tab').value || 'Sheet1'
+            };
+
+            const btn = event.target;
+            btn.textContent = 'Connecting...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/sheets/connect', { method: 'POST', body: JSON.stringify(body) });
+
+            btn.textContent = 'Connect Sheet';
+            btn.disabled = false;
+
+            if (data.success) {
+                loadSheetStatus();
+                alert('Sheet connected successfully! Use the sync buttons to push or pull your inventory.');
+            } else {
+                alert(data.error || 'Failed to connect sheet');
+            }
+        }
+
+        async function syncSheet(direction) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Syncing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/sheets/sync', {
+                method: 'POST',
+                body: JSON.stringify({ direction })
+            });
+
+            btn.textContent = originalText;
+            btn.disabled = false;
+
+            if (data.success) {
+                loadSheetStatus();
+                const s = data.sync;
+                if (direction === 'push') {
+                    alert('Pushed ' + s.pushed + ' cards to Google Sheet.');
+                } else if (direction === 'pull') {
+                    alert('Pulled from Sheet: ' + s.updated + ' updated, ' + s.inserted + ' new, ' + s.unlisted + ' unlisted.');
+                } else {
+                    alert('Synced! Pulled: ' + s.pulled.updated + ' updated, ' + s.pulled.inserted + ' new. Pushed ' + s.pushed + ' cards back.');
+                }
+            } else {
+                alert(data.error || 'Sync failed');
+            }
+        }
+
+        async function disconnectSheet() {
+            if (!confirm('Disconnect Google Sheet? Your inventory data will remain in Card Sync.')) return;
+            const data = await apiFetch('/api/sheets/status', { method: 'DELETE' });
+            if (data.success) loadSheetStatus();
+        }
+
+        async function loadSheetStatus() {
+            const data = await apiFetch('/api/sheets/status');
+            const tag = document.getElementById('sheets-tag');
+            const dot = document.getElementById('sheets-dot');
+            const statusText = document.getElementById('sheets-status-text');
+            const actions = document.getElementById('sheets-status-actions');
+            const form = document.getElementById('connect-form');
+
+            if (data.success && data.connected) {
+                const conn = data.connections[0];
+
+                tag.className = 'tag tag-connected';
+                tag.textContent = 'Connected';
+                dot.className = 'status-dot on';
+
+                let text = conn.sheet_name || 'Connected';
+                if (conn.last_synced_at) {
+                    text += ' — Last synced: ' + new Date(conn.last_synced_at).toLocaleString();
+                }
+                if (conn.last_sync_status === 'error') {
+                    text += ' (last sync failed)';
+                }
+                statusText.textContent = text;
+
+                actions.innerHTML = `
+                    <button class="btn btn-sheets btn-sm" onclick="syncSheet('push')">Push to Sheet</button>
+                    <button class="btn btn-sheets btn-sm" onclick="syncSheet('pull')">Pull from Sheet</button>
+                    <button class="btn btn-sheets btn-sm" onclick="syncSheet('both')">Sync Both</button>
+                    <button class="btn btn-danger btn-sm" onclick="disconnectSheet()">Disconnect</button>
+                `;
+
+                form.style.display = 'none';
+            } else {
+                tag.className = 'tag tag-not-connected';
+                tag.textContent = 'Not Connected';
+                dot.className = 'status-dot off';
+                statusText.textContent = 'No sheet connected';
+                actions.innerHTML = '';
+                form.style.display = 'block';
+            }
+        }
+
+        loadSheetStatus();
+    </script>
+</body>
+</html>

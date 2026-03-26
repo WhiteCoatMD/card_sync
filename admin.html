@@ -12,26 +12,85 @@
         .header-right { display: flex; gap: 10px; align-items: center; }
         .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
         .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         .welcome { font-size: 1.2rem; color: #aaa; margin-bottom: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+        .stat-card { background: #1a1a2e; border-radius: 10px; padding: 24px; border: 1px solid #2a2a3e; }
+        .stat-card .label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; }
+        .stat-card .sub { color: #666; font-size: 13px; margin-top: 4px; }
+        .value-green { color: #4caf50; }
+        .value-orange { color: #ff9800; }
+        .value-blue { color: #4a90d9; }
         .card { background: #1a1a2e; border-radius: 10px; padding: 24px; margin-bottom: 16px; border: 1px solid #2a2a3e; }
-        .card h2 { margin-bottom: 8px; font-size: 1.1rem; }
+        .card h2 { margin-bottom: 12px; font-size: 1.1rem; }
         .card p { color: #888; font-size: 14px; }
+        .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+        .quick-link { display: flex; align-items: center; gap: 12px; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; text-decoration: none; color: #fff; transition: border-color 0.15s; }
+        .quick-link:hover { border-color: #4a90d9; }
+        .quick-link .icon { font-size: 28px; width: 40px; text-align: center; }
+        .quick-link .text { font-size: 14px; font-weight: 600; }
+        .quick-link .desc { font-size: 12px; color: #888; }
+        .recent-table { width: 100%; border-collapse: collapse; }
+        .recent-table th, .recent-table td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        .recent-table th { color: #888; font-size: 11px; text-transform: uppercase; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-buy { background: rgba(255,152,0,0.2); color: #ff9800; }
+        .badge-sell { background: rgba(76,175,80,0.2); color: #4caf50; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Card Sync</h1>
         <div class="header-right">
+            <a href="inventory.html" class="btn">Inventory</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a href="marketplace.html" class="btn">Marketplace</a>
+            <a href="integrations.html" class="btn">Integrations</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
             <button class="btn" onclick="logout()">Logout</button>
         </div>
     </div>
     <div class="container">
         <p class="welcome" id="welcome">Welcome back!</p>
+
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="label">Total Cards</div><div class="value" id="stat-cards">—</div><div class="sub" id="stat-cards-sub"></div></div>
+            <div class="stat-card"><div class="label">Available Stock</div><div class="value value-blue" id="stat-available">—</div></div>
+            <div class="stat-card"><div class="label">Total Sales</div><div class="value value-green" id="stat-sales">—</div><div class="sub" id="stat-sales-sub"></div></div>
+            <div class="stat-card"><div class="label">Total Purchases</div><div class="value value-orange" id="stat-purchases">—</div><div class="sub" id="stat-purchases-sub"></div></div>
+            <div class="stat-card"><div class="label">Retail Value</div><div class="value value-green" id="stat-retail">—</div></div>
+            <div class="stat-card"><div class="label">Inventory Cost</div><div class="value value-orange" id="stat-cost">—</div></div>
+        </div>
+
+        <div class="quick-links">
+            <a href="inventory.html" class="quick-link">
+                <div class="icon">&#127183;</div>
+                <div><div class="text">Manage Inventory</div><div class="desc">Add, edit, and track your card stock</div></div>
+            </a>
+            <a href="orders.html" class="quick-link">
+                <div class="icon">&#128230;</div>
+                <div><div class="text">Orders</div><div class="desc">View and create buy/sell orders</div></div>
+            </a>
+            <a href="marketplace.html" class="quick-link">
+                <div class="icon">&#128722;</div>
+                <div><div class="text">Marketplace</div><div class="desc">Browse your public storefront</div></div>
+            </a>
+            <a href="integrations.html" class="quick-link">
+                <div class="icon">&#128279;</div>
+                <div><div class="text">Integrations</div><div class="desc">Google Sheets, PayPal, and more</div></div>
+            </a>
+        </div>
+
         <div class="card">
-            <h2>Dashboard</h2>
-            <p>Your playing card trading platform is ready. Start building from here.</p>
+            <h2>Recent Orders</h2>
+            <table class="recent-table" id="recent-orders">
+                <thead><tr><th>Order</th><th>Type</th><th>Customer</th><th>Items</th><th>Total</th><th>Date</th></tr></thead>
+                <tbody id="recent-orders-body">
+                    <tr><td colspan="6" style="color:#666;text-align:center;padding:20px;">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <script>
@@ -55,6 +114,49 @@
                 window.location.href = 'login.html';
             });
         }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/inventory/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                if (!data.success) return;
+
+                const inv = data.inventory;
+                const ord = data.orders;
+
+                document.getElementById('stat-cards').textContent = parseInt(inv.total_cards).toLocaleString();
+                document.getElementById('stat-cards-sub').textContent = `${inv.category_count} categories`;
+                document.getElementById('stat-available').textContent = parseInt(inv.available_quantity).toLocaleString();
+                document.getElementById('stat-sales').textContent = '$' + parseFloat(ord.total_sales).toLocaleString(undefined, {minimumFractionDigits:2});
+                document.getElementById('stat-sales-sub').textContent = `${ord.sale_count} orders`;
+                document.getElementById('stat-purchases').textContent = '$' + parseFloat(ord.total_purchases).toLocaleString(undefined, {minimumFractionDigits:2});
+                document.getElementById('stat-purchases-sub').textContent = `${ord.purchase_count} orders`;
+                document.getElementById('stat-retail').textContent = '$' + parseFloat(inv.total_retail_value).toLocaleString(undefined, {minimumFractionDigits:2});
+                document.getElementById('stat-cost').textContent = '$' + parseFloat(inv.total_cost).toLocaleString(undefined, {minimumFractionDigits:2});
+
+                const tbody = document.getElementById('recent-orders-body');
+                if (data.recentOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="color:#666;text-align:center;padding:20px;">No orders yet</td></tr>';
+                } else {
+                    tbody.innerHTML = data.recentOrders.map(o => `
+                        <tr>
+                            <td><a href="orders.html" style="color:#4a90d9;text-decoration:none;">#${o.id}</a></td>
+                            <td><span class="badge badge-${o.type}">${o.type === 'sell' ? 'Sale' : 'Purchase'}</span></td>
+                            <td>${o.customer_name || '—'}</td>
+                            <td>${o.item_count}</td>
+                            <td>$${parseFloat(o.total_amount).toFixed(2)}</td>
+                            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Dashboard load error:', e);
+            }
+        }
+
+        loadDashboard();
     </script>
 </body>
 </html>

@@ -4,18 +4,22 @@
   "description": "Playing card trading platform",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
+    "start": "vercel dev",
     "lint": "eslint api/ lib/",
     "lint:fix": "eslint api/ lib/ --fix"
   },
-  "keywords": ["trading-cards", "marketplace"],
+  "keywords": [
+    "trading-cards",
+    "marketplace"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
+    "dotenv": "^17.3.1",
+    "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.0",
     "pg": "^8.11.0"
-  },
-  "devDependencies": {}
+  }
 }
