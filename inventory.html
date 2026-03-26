@@ -378,9 +378,16 @@
             return d.innerHTML;
         }
 
+        function clearLookup() {
+            document.getElementById('lookup-result').style.display = 'none';
+            document.getElementById('lookup-img').style.display = 'none';
+            lastLookupPrice = null;
+        }
+
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Card';
             document.getElementById('edit-id').value = '';
+            clearLookup();
             ['name', 'set_name', 'card_number', 'rarity', 'buy_price', 'sell_price', 'image_url', 'description'].forEach(f =>
                 document.getElementById('field-' + f).value = ''
             );
@@ -392,6 +399,7 @@
         }
 
         async function editCard(id) {
+            clearLookup();
             const data = await apiFetch(`${API}/${id}`);
             if (!data.success) return alert('Failed to load card');
 
