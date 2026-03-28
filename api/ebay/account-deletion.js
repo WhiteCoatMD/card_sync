@@ -11,12 +11,14 @@ module.exports = async (req, res) => {
     const verificationToken = process.env.EBAY_VERIFICATION_TOKEN;
     const endpoint = 'https://cardsync-lemon.vercel.app/api/ebay/account-deletion';
 
-    const hash = crypto
-      .createHash('sha256')
-      .update(challengeCode + verificationToken + endpoint)
-      .digest('hex');
+    const hash = crypto.createHash('sha256');
+    hash.update(challengeCode);
+    hash.update(verificationToken);
+    hash.update(endpoint);
+    const responseHash = hash.digest('hex');
 
-    return res.status(200).json({ challengeResponse: hash });
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({ challengeResponse: responseHash });
   }
 
   if (req.method === 'POST') {
