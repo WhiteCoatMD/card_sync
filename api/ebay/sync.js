@@ -35,23 +35,23 @@ module.exports = requireAuth(async function handler(req, res) {
             const item = result.rows[0];
             const sku = `CS-${item.id}`;
 
-            await createOrUpdateInventoryItem(accessToken, sku, item);
+            if (!item.ebay_listing_id && item.sell_price) {
+                const offer = await createOffer(accessToken, sku, item.sell_price, item);
 
-            // Create offer if doesn't exist
-            if (!item.ebay_offer_id && item.sell_price) {
-                const offer = await createOffer(accessToken, sku, item.sell_price);
-                const published = await publishOffer(accessToken, offer.offerId);
+                let listingId = offer.listingId || null;
+                let offerId = offer.offerId || null;
+
+                // If Inventory API offer, need to publish
+                if (offerId && !listingId) {
+                    const published = await publishOffer(accessToken, offerId);
+                    listingId = published.listingId;
+                }
 
                 await pool.query(
                     'UPDATE inventory SET ebay_sku = $1, ebay_offer_id = $2, ebay_listing_id = $3 WHERE id = $4',
-                    [sku, offer.offerId, published.listingId, item.id]
+                    [sku, offerId, listingId, item.id]
                 );
             }
-
-            await pool.query(
-                'UPDATE inventory SET ebay_sku = $1 WHERE id = $2',
-                [sku, item.id]
-            );
 
             return res.status(200).json({ success: true, message: 'Item pushed to eBay', sku });
         }
@@ -68,18 +68,24 @@ module.exports = requireAuth(async function handler(req, res) {
             for (const item of items.rows) {
                 try {
                     const sku = `CS-${item.id}`;
-                    await createOrUpdateInventoryItem(accessToken, sku, item);
 
-                    if (!item.ebay_offer_id) {
-                        const offer = await createOffer(accessToken, sku, item.sell_price);
-                        const published = await publishOffer(accessToken, offer.offerId);
+                    if (!item.ebay_listing_id) {
+                        const offer = await createOffer(accessToken, sku, item.sell_price, item);
+
+                        let listingId = offer.listingId || null;
+                        let offerId = offer.offerId || null;
+
+                        if (offerId && !listingId) {
+                            const published = await publishOffer(accessToken, offerId);
+                            listingId = published.listingId;
+                        }
+
                         await pool.query(
                             'UPDATE inventory SET ebay_sku = $1, ebay_offer_id = $2, ebay_listing_id = $3 WHERE id = $4',
-                            [sku, offer.offerId, published.listingId, item.id]
+                            [sku, offerId, listingId, item.id]
                         );
                     }
 
-                    await pool.query('UPDATE inventory SET ebay_sku = $1 WHERE id = $2', [sku, item.id]);
                     pushed++;
                 } catch (err) {
                     errors.push({ item_id: item.id, name: item.name, error: err.message });
