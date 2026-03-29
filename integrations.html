@@ -694,7 +694,10 @@
 
         // Check for Stripe callback result
         if (urlParams.get('stripe') === 'connected') {
-            alert('Stripe connected successfully!');
+            alert('Stripe connected successfully! Payments are now active on your storefront.');
+            history.replaceState({}, '', '/integrations.html');
+        } else if (urlParams.get('stripe') === 'refresh') {
+            alert('Stripe onboarding incomplete. Click "Connect Stripe" to continue.');
             history.replaceState({}, '', '/integrations.html');
         } else if (urlParams.get('stripe') === 'error') {
             alert('Stripe connection failed: ' + (urlParams.get('msg') || 'Unknown error'));
