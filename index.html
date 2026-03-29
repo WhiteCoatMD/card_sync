@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Inventory Management for Card Dealers</title>
+    <meta name="description" content="The all-in-one platform for trading card dealers. Manage inventory, sync to eBay, get market pricing, and launch your own online storefront.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a1a;
+            --surface: #1a1a2e;
+            --border: #2a2a3e;
+            --accent: #4a90d9;
+            --accent-glow: rgba(74, 144, 217, 0.15);
+            --green: #4caf50;
+            --green-glow: rgba(76, 175, 80, 0.15);
+            --text: #e8e8f0;
+            --text-muted: #8888a0;
+            --serif: 'Instrument Serif', Georgia, serif;
+            --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---- NAV ---- */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 10, 26, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(42, 42, 62, 0.5);
+        }
+
+        .nav-logo {
+            font-family: var(--serif);
+            font-size: 1.5rem;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: #fff; }
+
+        .nav-cta {
+            background: var(--accent) !important;
+            color: #fff !important;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600 !important;
+            transition: opacity 0.2s !important;
+        }
+
+        .nav-cta:hover { opacity: 0.9; }
+
+        /* ---- HERO ---- */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 2rem 80px;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(74, 144, 217, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-glow);
+            border: 1px solid rgba(74, 144, 217, 0.25);
+            border-radius: 100px;
+            padding: 6px 18px;
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 2rem;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            line-height: 1.1;
+            font-weight: 400;
+            max-width: 800px;
+            margin-bottom: 1.5rem;
+            animation: fadeUp 0.8s 0.1s ease both;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .hero-sub {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            max-width: 520px;
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+            animation: fadeUp 0.8s 0.2s ease both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            animation: fadeUp 0.8s 0.3s ease both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-family: var(--sans);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 24px rgba(74, 144, 217, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 32px rgba(74, 144, 217, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: #4a4a5e;
+            background: #22223a;
+        }
+
+        .hero-visual {
+            margin-top: 4rem;
+            width: 100%;
+            max-width: 900px;
+            animation: fadeUp 0.8s 0.4s ease both;
+        }
+
+        .hero-mockup {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+        }
+
+        .mockup-bar {
+            height: 36px;
+            background: #12122a;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 14px;
+        }
+
+        .mockup-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2a2a3e;
+        }
+
+        .mockup-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .mock-card {
+            background: #12122a;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .mock-card:hover { border-color: var(--accent); }
+
+        .mock-card-img {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, #1e1e3a 0%, #16162e 100%);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            opacity: 0.6;
+        }
+
+        .mock-card-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mock-card-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .mock-card-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ---- STATS STRIP ---- */
+        .stats-strip {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--serif);
+            font-size: 2.5rem;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* ---- FEATURES ---- */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 1rem;
+            line-height: 1.15;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 3.5rem;
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feature {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px 24px;
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .feature:hover {
+            border-color: #3a3a5e;
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feature h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ---- STOREFRONT HIGHLIGHT ---- */
+        .storefront {
+            padding: 6rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .storefront-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .storefront-text h2 {
+            font-family: var(--serif);
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .storefront-text h2 em {
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .storefront-text p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .url-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #12122a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            margin-bottom: 1.5rem;
+        }
+
+        .url-preview .lock { color: var(--green); font-size: 12px; }
+        .url-preview .domain { color: var(--text-muted); }
+        .url-preview .sub { color: var(--accent); font-weight: 600; }
+
+        .storefront-visual {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .store-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .store-header h4 { font-size: 14px; }
+        .store-header span { font-size: 12px; color: var(--text-muted); }
+
+        .store-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 16px;
+        }
+
+        .store-item {
+            background: #12122a;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .store-item-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #1e1e3a;
+            margin-bottom: 6px;
+        }
+
+        .store-item-bar.short { width: 60%; }
+
+        .store-item-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        /* ---- PRICING TEASER ---- */
+        .pricing-teaser {
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .pricing-teaser-inner {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 3.5rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-teaser-inner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .pricing-teaser h2 {
+            font-family: var(--serif);
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            margin-bottom: 0.75rem;
+        }
+
+        .pricing-teaser p {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .price-tag {
+            font-family: var(--serif);
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .price-tag span {
+            font-family: var(--sans);
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .price-note {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        /* ---- FOOTER ---- */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            font-family: var(--serif);
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: #fff; }
+
+        .footer-copy {
+            font-size: 12px;
+            color: #444;
+            width: 100%;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        /* ---- ANIMATIONS ---- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .features-grid { grid-template-columns: 1fr; }
+            .storefront-inner { grid-template-columns: 1fr; }
+            .stats-strip { gap: 2rem; }
+            .stat-value { font-size: 2rem; }
+            .mockup-body { grid-template-columns: 1fr 1fr; }
+            .hero { padding: 100px 1.5rem 60px; }
+            .hero-actions { flex-direction: column; width: 100%; max-width: 300px; }
+            .hero-actions .btn { justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .mockup-body { grid-template-columns: 1fr; }
+            .store-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <a href="/" class="nav-logo">Collect Sync</a>
+        <div class="nav-links">
+            <a href="marketplace.html">Marketplace</a>
+            <a href="pricing.html">Pricing</a>
+            <a href="login.html">Log In</a>
+            <a href="signup.html" class="nav-cta">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge"><span class="dot"></span> Now with eBay sync + dealer storefronts</div>
+        <h1>The operating system for <em>card dealers</em></h1>
+        <p class="hero-sub">Manage your inventory, sync across platforms, get real-time market pricing, and give your shop its own storefront. All in one place.</p>
+        <div class="hero-actions">
+            <a href="signup.html" class="btn btn-primary">Start free today</a>
+            <a href="marketplace.html" class="btn btn-secondary">Browse marketplace</a>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-mockup">
+                <div class="mockup-bar">
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                </div>
+                <div class="mockup-body">
+                    <div class="mock-card">
+                        <div class="mock-card-img">&#127183;</div>
+                        <div class="mock-card-title">Charizard VMAX</div>
+                        <div class="mock-card-price">$184.99</div>
+                        <div class="mock-card-meta">Near Mint</div>
+                    </div>
+                    <div class="mock-card">
+                        <div class="mock-card-img">&#9876;</div>
+                        <div class="mock-card-title">Black Lotus</div>
+                        <div class="mock-card-price">$42,000</div>
+                        <div class="mock-card-meta">Moderately Played</div>
+                    </div>
+                    <div class="mock-card">
+                        <div class="mock-card-img">&#128171;</div>
+                        <div class="mock-card-title">Blue-Eyes White Dragon</div>
+                        <div class="mock-card-price">$399.50</div>
+                        <div class="mock-card-meta">Lightly Played</div>
+                    </div>
+                    <div class="mock-card">
+                        <div class="mock-card-img">&#9917;</div>
+                        <div class="mock-card-title">Luka Doncic Prizm</div>
+                        <div class="mock-card-price">$275.00</div>
+                        <div class="mock-card-meta">Mint</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats-strip">
+        <div class="stat reveal">
+            <div class="stat-value">6</div>
+            <div class="stat-label">TCGs supported</div>
+        </div>
+        <div class="stat reveal">
+            <div class="stat-value">$0</div>
+            <div class="stat-label">Transaction fees</div>
+        </div>
+        <div class="stat reveal">
+            <div class="stat-value">2-way</div>
+            <div class="stat-label">Google Sheets sync</div>
+        </div>
+        <div class="stat reveal">
+            <div class="stat-value">Live</div>
+            <div class="stat-label">Market pricing</div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="section-label reveal">Everything you need</div>
+        <h2 class="section-title reveal">Run your entire card business from one dashboard</h2>
+        <p class="section-sub reveal">Built by dealers, for dealers. Every feature exists because someone asked for it.</p>
+
+        <div class="features-grid">
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: var(--accent-glow);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a90d9" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                </div>
+                <h3>Inventory Management</h3>
+                <p>Add, edit, search, and filter your entire collection. Track cost, sell price, condition, and quantity across every TCG.</p>
+            </div>
+
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: rgba(226, 38, 28, 0.12);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2261c" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3>eBay Sync</h3>
+                <p>Push your inventory straight to eBay as live listings. Correct categories, conditions, and item specifics handled automatically.</p>
+            </div>
+
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: var(--green-glow);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                </div>
+                <h3>Google Sheets Sync</h3>
+                <p>Two-way sync with Google Sheets. Update cards on mobile, share with your team, and everything stays in sync.</p>
+            </div>
+
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: rgba(156, 39, 176, 0.12);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9c27b0" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <h3>Your Own Storefront</h3>
+                <p>Get a branded online store at yourshop.collect-sync.com. Customers browse, search, and buy directly from you.</p>
+            </div>
+
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: rgba(255, 152, 0, 0.12);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <h3>Market Pricing</h3>
+                <p>Real-time prices from JustTCG and Scryfall. Know what every card is worth before you price it.</p>
+            </div>
+
+            <div class="feature reveal">
+                <div class="feature-icon" style="background: rgba(0, 188, 212, 0.12);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3>Analytics</h3>
+                <p>Profit margins, top sellers, aging inventory, and revenue trends. See exactly how your business is performing.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STOREFRONT HIGHLIGHT -->
+    <section class="storefront">
+        <div class="storefront-inner">
+            <div class="storefront-text reveal">
+                <div class="section-label" style="text-align:left;">Dealer storefronts</div>
+                <h2>Your shop, <em>your brand</em>, your URL</h2>
+                <p>Every dealer gets their own online storefront with a custom subdomain. Your customers see your name, your inventory, and your prices. No marketplace fees, no competing listings.</p>
+                <div class="url-preview">
+                    <span class="lock">&#128274;</span>
+                    <span><span class="sub">cardkinghq</span><span class="domain">.collect-sync.com</span></span>
+                </div>
+                <br>
+                <a href="signup.html" class="btn btn-primary">Claim your subdomain</a>
+            </div>
+            <div class="storefront-visual reveal">
+                <div class="store-header">
+                    <h4>Card King HQ</h4>
+                    <span>24 cards listed</span>
+                </div>
+                <div class="store-grid">
+                    <div class="store-item">
+                        <div class="store-item-bar"></div>
+                        <div class="store-item-bar short"></div>
+                        <div class="store-item-price">$24.99</div>
+                    </div>
+                    <div class="store-item">
+                        <div class="store-item-bar"></div>
+                        <div class="store-item-bar short"></div>
+                        <div class="store-item-price">$149.00</div>
+                    </div>
+                    <div class="store-item">
+                        <div class="store-item-bar"></div>
+                        <div class="store-item-bar short"></div>
+                        <div class="store-item-price">$8.50</div>
+                    </div>
+                    <div class="store-item">
+                        <div class="store-item-bar"></div>
+                        <div class="store-item-bar short"></div>
+                        <div class="store-item-price">$62.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING TEASER -->
+    <section class="pricing-teaser">
+        <div class="pricing-teaser-inner reveal">
+            <div class="section-label">Pricing</div>
+            <h2>Start free. Scale when you're ready.</h2>
+            <p>List up to 250 cards on the free plan. No credit card required, no time limit. Upgrade when your inventory grows.</p>
+            <div class="price-tag">Free <span>/ forever</span></div>
+            <p class="price-note">Pro plans start at $29/mo for up to 5,000 cards</p>
+            <a href="pricing.html" class="btn btn-primary">See all plans</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-logo">Collect Sync</div>
+        <div class="footer-links">
+            <a href="marketplace.html">Marketplace</a>
+            <a href="pricing.html">Pricing</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="login.html">Log In</a>
+            <a href="signup.html">Sign Up</a>
+        </div>
+        <div class="footer-copy">&copy; 2026 Collect Sync. All rights reserved.</div>
+    </footer>
+
+    <script>
+        // Reveal on scroll
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => entry.target.classList.add('visible'), i * 80);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        reveals.forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
