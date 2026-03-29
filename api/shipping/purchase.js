@@ -1,6 +1,6 @@
 /**
  * Purchase Shipping Label API
- * POST /api/shipping/purchase — buy label at selected rate
+ * POST /api/shipping/purchase — charge dealer via Stripe, then buy EasyPost label
  */
 
 const { requireAuth } = require('../../lib/auth');
@@ -8,6 +8,7 @@ const { setCorsHeaders } = require('../../lib/cors-security');
 const { getPool } = require('../../lib/db');
 const { retryQuery } = require('../../lib/db-retry');
 const { buyLabel } = require('../../lib/shipping');
+const { getStripe, getDealerStripeAccount } = require('../../lib/stripe');
 
 const pool = getPool();
 
@@ -17,13 +18,69 @@ module.exports = requireAuth(async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
     try {
-        const { order_id, shipment_id, rate_id, to_address, weight_oz } = req.body;
+        const { order_id, shipment_id, rate_id, rate_amount, to_address, weight_oz } = req.body;
 
         if (!shipment_id || !rate_id) {
             return res.status(400).json({ success: false, error: 'shipment_id and rate_id are required' });
         }
 
-        const result = await buyLabel(shipment_id, rate_id);
+        if (!rate_amount || rate_amount <= 0) {
+            return res.status(400).json({ success: false, error: 'Invalid rate amount' });
+        }
+
+        // Check dealer has Stripe connected
+        const stripe = getStripe();
+        const dealerAccount = await getDealerStripeAccount(req.user.id);
+
+        if (!stripe || !dealerAccount) {
+            return res.status(400).json({ success: false, error: 'Connect your Stripe account first to purchase shipping labels' });
+        }
+
+        // Charge the dealer's connected Stripe account
+        const amountCents = Math.round(parseFloat(rate_amount) * 100);
+
+        let paymentIntent;
+        try {
+            paymentIntent = await stripe.paymentIntents.create({
+                amount: amountCents,
+                currency: 'usd',
+                description: `Shipping label${order_id ? ' for Order #' + order_id : ''}`,
+                payment_method_types: ['card'],
+                confirm: true,
+                customer: undefined,
+                metadata: {
+                    type: 'shipping_label',
+                    order_id: order_id ? order_id.toString() : '',
+                    dealer_id: req.user.id.toString(),
+                },
+            }, {
+                stripeAccount: dealerAccount.accountId,
+            });
+        } catch (stripeErr) {
+            console.error('Stripe charge failed:', stripeErr.message);
+            return res.status(402).json({
+                success: false,
+                error: 'Payment failed — ' + (stripeErr.message || 'unable to charge your account. Add a payment method to your Stripe account.'),
+            });
+        }
+
+        if (paymentIntent.status !== 'succeeded') {
+            return res.status(402).json({ success: false, error: 'Payment not completed. Status: ' + paymentIntent.status });
+        }
+
+        // Payment succeeded — now buy the label
+        let result;
+        try {
+            result = await buyLabel(shipment_id, rate_id);
+        } catch (labelErr) {
+            // Label failed after payment — refund
+            try {
+                await stripe.refunds.create({ payment_intent: paymentIntent.id }, { stripeAccount: dealerAccount.accountId });
+            } catch (refundErr) {
+                console.error('Refund failed:', refundErr.message);
+            }
+            return res.status(500).json({ success: false, error: 'Label purchase failed after payment. You have been refunded.' });
+        }
 
         // Save shipment record
         await retryQuery(
@@ -39,7 +96,7 @@ module.exports = requireAuth(async function handler(req, res) {
             'Shipping - Save'
         );
 
-        // Update order with tracking info if order_id provided
+        // Update order with tracking info
         if (order_id) {
             await retryQuery(
                 () => pool.query(
@@ -57,6 +114,7 @@ module.exports = requireAuth(async function handler(req, res) {
             carrier: result.carrier,
             service: result.service,
             rate: result.rate,
+            charged: rate_amount,
         });
     } catch (error) {
         console.error('Shipping purchase error:', error);

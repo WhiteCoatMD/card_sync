@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Shipping</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-green { background: #4caf50; border-color: #4caf50; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+        .tabs { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid #2a2a3e; }
+        .tab { padding: 12px 24px; font-size: 14px; font-weight: 600; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+        .tab:hover { color: #ccc; }
+        .tab.active { color: #4a90d9; border-bottom-color: #4a90d9; }
+
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4a90d9; }
+        .form-group .help { font-size: 11px; color: #555; margin-top: 4px; }
+        .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+        .rate-option { background: #0d0d1a; border: 2px solid #2a2a3e; border-radius: 8px; padding: 14px 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s; }
+        .rate-option:hover, .rate-option.selected { border-color: #4a90d9; }
+        .rate-carrier { font-weight: 700; font-size: 14px; }
+        .rate-service { color: #888; font-size: 12px; margin-top: 2px; }
+        .rate-price { font-weight: 700; color: #4caf50; font-size: 18px; }
+        .rate-days { color: #888; font-size: 11px; text-align: right; }
+
+        .label-result { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; padding: 24px; text-align: center; }
+        .label-result a { color: #4caf50; font-weight: 700; text-decoration: none; font-size: 16px; }
+        .label-result .tracking { font-size: 14px; color: #888; margin-top: 8px; }
+
+        table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 10px; overflow: hidden; border: 1px solid #2a2a3e; }
+        th, td { padding: 10px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        th { color: #888; font-size: 11px; text-transform: uppercase; background: #12122a; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-purchased { background: rgba(33,150,243,0.15); color: #2196f3; }
+        .badge-in_transit { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .badge-delivered { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .empty { text-align: center; padding: 2rem; color: #666; }
+        .hidden { display: none; }
+
+        .presets { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .preset { padding: 6px 14px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #aaa; font-size: 12px; cursor: pointer; }
+        .preset:hover, .preset.active { border-color: #4a90d9; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync — Shipping</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('create')">Create Label</div>
+            <div class="tab" onclick="switchTab('history')">Shipment History</div>
+            <div class="tab" onclick="switchTab('settings')">Settings</div>
+        </div>
+
+        <!-- CREATE LABEL TAB -->
+        <div id="tab-create">
+            <div class="section">
+                <h3>Ship To</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>Recipient Name *</label><input type="text" id="to-name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Street Address *</label><input type="text" id="to-street1"></div>
+                    <div class="form-group" style="flex:0.5;"><label>Apt/Suite</label><input type="text" id="to-street2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>City *</label><input type="text" id="to-city"></div>
+                    <div class="form-group" style="flex:0.4;"><label>State *</label><input type="text" id="to-state" maxlength="2" placeholder="CA"></div>
+                    <div class="form-group" style="flex:0.4;"><label>ZIP *</label><input type="text" id="to-zip" maxlength="10"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Package</h3>
+                <div class="presets">
+                    <div class="preset active" onclick="setPreset(this, 3, 6, 4, 1)">Single Card (3 oz)</div>
+                    <div class="preset" onclick="setPreset(this, 6, 7, 5, 2)">Small Lot (6 oz)</div>
+                    <div class="preset" onclick="setPreset(this, 12, 8, 6, 3)">Medium Box (12 oz)</div>
+                    <div class="preset" onclick="setPreset(this, 32, 12, 10, 5)">Large Box (2 lb)</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.5;"><label>Weight (oz) *</label><input type="number" id="pkg-weight" value="3" step="0.5" min="0.5"></div>
+                    <div class="form-group" style="flex:0.5;"><label>Length (in)</label><input type="number" id="pkg-length" value="6" step="0.5"></div>
+                    <div class="form-group" style="flex:0.5;"><label>Width (in)</label><input type="number" id="pkg-width" value="4" step="0.5"></div>
+                    <div class="form-group" style="flex:0.5;"><label>Height (in)</label><input type="number" id="pkg-height" value="1" step="0.5"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.5;">
+                        <label>Link to Order (optional)</label>
+                        <input type="number" id="link-order" placeholder="Order # to attach tracking">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" onclick="getRates()" id="rates-btn">Get Shipping Rates</button>
+                </div>
+            </div>
+
+            <div class="section hidden" id="rates-section">
+                <h3>Select Rate</h3>
+                <div id="rates-list"></div>
+                <div class="form-actions">
+                    <button class="btn btn-green" id="buy-btn" onclick="purchaseLabel()" disabled>Select a rate to continue</button>
+                </div>
+            </div>
+
+            <div class="hidden" id="label-section"></div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="tab-history" class="hidden">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Order</th>
+                        <th>Recipient</th>
+                        <th>Carrier</th>
+                        <th>Service</th>
+                        <th>Tracking</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                        <th>Label</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="tab-settings" class="hidden">
+            <div class="section">
+                <h3>Return Address (Ship From)</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>Name / Business</label><input type="text" id="from-name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Street Address</label><input type="text" id="from-street"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>City</label><input type="text" id="from-city"></div>
+                    <div class="form-group" style="flex:0.4;"><label>State</label><input type="text" id="from-state" maxlength="2"></div>
+                    <div class="form-group" style="flex:0.4;"><label>ZIP</label><input type="text" id="from-zip" maxlength="10"></div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" onclick="saveFromAddress()">Save Return Address</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Stripe Account</h3>
+                <p style="color:#888;font-size:13px;margin-bottom:12px;">Shipping label costs are charged to your connected Stripe account. Make sure you have a payment method on file.</p>
+                <div id="stripe-ship-status" style="font-size:13px;color:#888;">Checking...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        let shipmentId = null;
+        let selectedRateId = null;
+        let selectedRateAmount = 0;
+
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            ['create', 'history', 'settings'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            if (tab === 'history') loadHistory();
+            if (tab === 'settings') loadSettings();
+        }
+
+        function setPreset(el, weight, length, width, height) {
+            document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('pkg-weight').value = weight;
+            document.getElementById('pkg-length').value = length;
+            document.getElementById('pkg-width').value = width;
+            document.getElementById('pkg-height').value = height;
+        }
+
+        function getToAddress() {
+            return {
+                name: document.getElementById('to-name').value.trim(),
+                street1: document.getElementById('to-street1').value.trim(),
+                street2: document.getElementById('to-street2').value.trim(),
+                city: document.getElementById('to-city').value.trim(),
+                state: document.getElementById('to-state').value.trim(),
+                zip: document.getElementById('to-zip').value.trim(),
+            };
+        }
+
+        async function getRates() {
+            const addr = getToAddress();
+            if (!addr.name || !addr.street1 || !addr.city || !addr.state || !addr.zip) {
+                return alert('Fill in all required address fields');
+            }
+
+            const btn = document.getElementById('rates-btn');
+            btn.textContent = 'Getting rates...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/shipping/rates', {
+                method: 'POST',
+                body: JSON.stringify({
+                    to_address: addr,
+                    weight_oz: parseFloat(document.getElementById('pkg-weight').value) || 3,
+                })
+            });
+
+            btn.textContent = 'Get Shipping Rates';
+            btn.disabled = false;
+
+            if (!data.success) return alert(data.error || 'Failed to get rates');
+
+            shipmentId = data.shipment_id;
+            selectedRateId = null;
+            selectedRateAmount = 0;
+
+            const list = document.getElementById('rates-list');
+            list.innerHTML = data.rates.map(r => `
+                <div class="rate-option" onclick="selectRate('${r.id}', ${r.rate}, this)">
+                    <div>
+                        <div class="rate-carrier">${esc(r.carrier)}</div>
+                        <div class="rate-service">${esc(r.service)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="rate-price">$${r.rate.toFixed(2)}</div>
+                        <div class="rate-days">${r.delivery_days ? r.delivery_days + ' day' + (r.delivery_days > 1 ? 's' : '') : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('rates-section').classList.remove('hidden');
+            document.getElementById('label-section').classList.add('hidden');
+            document.getElementById('buy-btn').disabled = true;
+            document.getElementById('buy-btn').textContent = 'Select a rate to continue';
+        }
+
+        function selectRate(rateId, amount, el) {
+            selectedRateId = rateId;
+            selectedRateAmount = amount;
+            document.querySelectorAll('.rate-option').forEach(r => r.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('buy-btn').disabled = false;
+            document.getElementById('buy-btn').textContent = 'Buy Label — $' + amount.toFixed(2);
+        }
+
+        async function purchaseLabel() {
+            if (!shipmentId || !selectedRateId) return;
+
+            const btn = document.getElementById('buy-btn');
+            btn.textContent = 'Charging & purchasing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/shipping/purchase', {
+                method: 'POST',
+                body: JSON.stringify({
+                    order_id: parseInt(document.getElementById('link-order').value) || null,
+                    shipment_id: shipmentId,
+                    rate_id: selectedRateId,
+                    rate_amount: selectedRateAmount,
+                    to_address: getToAddress(),
+                    weight_oz: parseFloat(document.getElementById('pkg-weight').value) || 3,
+                })
+            });
+
+            if (!data.success) {
+                btn.textContent = 'Buy Label — $' + selectedRateAmount.toFixed(2);
+                btn.disabled = false;
+                return alert(data.error || 'Failed to purchase label');
+            }
+
+            document.getElementById('rates-section').classList.add('hidden');
+            document.getElementById('label-section').classList.remove('hidden');
+            document.getElementById('label-section').innerHTML = `
+                <div class="label-result">
+                    <p style="font-size:18px;font-weight:700;margin-bottom:12px;">Label Purchased!</p>
+                    <a href="${esc(data.label_url)}" target="_blank">Download & Print Label (PDF)</a>
+                    <div class="tracking">
+                        ${esc(data.carrier)} ${esc(data.service)} — $${parseFloat(data.rate).toFixed(2)} charged<br>
+                        Tracking: <strong>${esc(data.tracking_number)}</strong>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-primary" onclick="resetForm()">Create Another Label</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetForm() {
+            shipmentId = null;
+            selectedRateId = null;
+            selectedRateAmount = 0;
+            document.getElementById('to-name').value = '';
+            document.getElementById('to-street1').value = '';
+            document.getElementById('to-street2').value = '';
+            document.getElementById('to-city').value = '';
+            document.getElementById('to-state').value = '';
+            document.getElementById('to-zip').value = '';
+            document.getElementById('link-order').value = '';
+            document.getElementById('rates-section').classList.add('hidden');
+            document.getElementById('label-section').classList.add('hidden');
+        }
+
+        // --- History ---
+        async function loadHistory() {
+            const data = await apiFetch('/api/shipping');
+            const tbody = document.getElementById('history-body');
+
+            if (!data.success || data.shipments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty">No shipments yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.shipments.map(s => `
+                <tr>
+                    <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td>${s.order_id ? '#' + s.order_id : '—'}</td>
+                    <td>${esc(s.to_name || '—')}<br><span style="font-size:11px;color:#666;">${esc(s.to_city || '')}${s.to_state ? ', ' + esc(s.to_state) : ''}</span></td>
+                    <td>${esc(s.carrier || '—')}</td>
+                    <td style="font-size:12px;">${esc(s.service || '—')}</td>
+                    <td>${s.tracking_number ? '<a href="https://tools.usps.com/go/TrackConfirmAction?tLabels=' + esc(s.tracking_number) + '" target="_blank" style="color:#4a90d9;font-size:12px;">' + esc(s.tracking_number) + '</a>' : '—'}</td>
+                    <td style="color:#4caf50;font-weight:600;">$${parseFloat(s.rate_amount || 0).toFixed(2)}</td>
+                    <td><span class="badge badge-${s.status}">${s.status}</span></td>
+                    <td>${s.label_url ? '<a href="' + esc(s.label_url) + '" target="_blank" class="btn btn-sm">PDF</a>' : '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Settings ---
+        async function loadSettings() {
+            const addrData = await apiFetch('/api/shipping/address');
+            if (addrData.success && addrData.address) {
+                document.getElementById('from-name').value = addrData.address.ship_from_name || '';
+                document.getElementById('from-street').value = addrData.address.ship_from_street1 || '';
+                document.getElementById('from-city').value = addrData.address.ship_from_city || '';
+                document.getElementById('from-state').value = addrData.address.ship_from_state || '';
+                document.getElementById('from-zip').value = addrData.address.ship_from_zip || '';
+            }
+
+            const stripeData = await apiFetch('/api/shop/stripe');
+            document.getElementById('stripe-ship-status').innerHTML = stripeData.connected
+                ? '<span style="color:#4caf50;">&#10003; Stripe connected — ready to purchase labels</span>'
+                : '<span style="color:#f44336;">&#10007; Stripe not connected — <a href="integrations.html" style="color:#4a90d9;">connect Stripe</a> to buy labels</span>';
+        }
+
+        async function saveFromAddress() {
+            const data = await apiFetch('/api/shipping/address', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name: document.getElementById('from-name').value.trim(),
+                    street1: document.getElementById('from-street').value.trim(),
+                    city: document.getElementById('from-city').value.trim(),
+                    state: document.getElementById('from-state').value.trim(),
+                    zip: document.getElementById('from-zip').value.trim(),
+                })
+            });
+            alert(data.success ? 'Return address saved!' : (data.error || 'Failed'));
+        }
+
+        // Feature gate
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(r => r.json()).then(data => {
+                if (data.success && !data.user.features.includes('shipping_labels')) {
+                    document.querySelector('.container').innerHTML = `
+                        <div style="text-align:center;padding:4rem;">
+                            <h2 style="margin-bottom:1rem;">Shipping Labels</h2>
+                            <p style="color:#888;margin-bottom:1.5rem;">Generate USPS, UPS, and FedEx shipping labels directly from Collect Sync.</p>
+                            <p style="color:#ff9800;margin-bottom:1.5rem;">&#128274; This feature requires a Business plan or higher.</p>
+                            <a href="pricing.html" class="btn btn-primary" style="padding:12px 24px;font-size:15px;">Upgrade Your Plan</a>
+                        </div>`;
+                }
+            });
+
+        // Check if order_id passed in URL
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('order')) {
+            document.getElementById('link-order').value = params.get('order');
+        }
+    </script>
+</body>
+</html>

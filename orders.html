@@ -244,9 +244,9 @@
                     <td>${new Date(o.created_at).toLocaleDateString()}</td>
                     <td>${o.type === 'sell' && o.status === 'completed' && !o.shipping_tracking
                         ? (hasShipping
-                            ? '<button class="btn btn-sm ship-btn" onclick="event.stopPropagation();openShipModal(' + o.id + ',\'' + esc(o.customer_name || '') + '\')">Ship</button>'
+                            ? '<a class="btn btn-sm ship-btn" href="shipping.html?order=' + o.id + '" onclick="event.stopPropagation();">Ship</a>'
                             : '<button class="btn btn-sm" style="opacity:0.35;" onclick="event.stopPropagation();alert(\'Upgrade to Business plan to create shipping labels\')" title="Upgrade to unlock">&#128274; Ship</button>')
-                        : (o.shipping_label_url ? '<a href="' + esc(o.shipping_label_url) + '" target="_blank" class="btn btn-sm" style="font-size:11px;">Label</a>' : '')}</td>
+                        : (o.shipping_label_url ? '<a href="' + esc(o.shipping_label_url) + '" target="_blank" class="btn btn-sm" style="font-size:11px;" onclick="event.stopPropagation();">Label</a>' : (o.shipping_tracking ? '' : ''))}</td>
                 </tr>
                 <tr class="order-detail" id="detail-${o.id}">
                     <td colspan="9">
