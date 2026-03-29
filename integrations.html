@@ -320,6 +320,46 @@
             </div>
         </div>
 
+        <!-- Stripe Payments -->
+        <div class="integration-card" id="stripe-card">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(99,91,255,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="5" width="20" height="14" rx="2" stroke="#635BFF" stroke-width="2" fill="none"/>
+                        <path d="M2 10h20" stroke="#635BFF" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Stripe Payments <span class="tag tag-not-connected" id="stripe-tag">Not Connected</span></h2>
+                </div>
+            </div>
+
+            <p class="integration-desc">
+                Accept credit card payments on your storefront. Customers can add cards to their cart and checkout securely via Stripe. Funds go directly to your Stripe account.
+            </p>
+
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="stripe-dot"></div>
+                    <span id="stripe-status-text">Not configured</span>
+                </div>
+            </div>
+
+            <div class="connect-form" id="stripe-form">
+                <h3>Stripe Configuration</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stripe Secret Key</label>
+                        <input type="password" id="stripe-key" placeholder="sk_live_... or sk_test_...">
+                        <div class="help">Find this in your <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:#4a90d9;">Stripe Dashboard → API Keys</a>. Use sk_test_ keys for testing.</div>
+                    </div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn btn-primary" onclick="saveStripeKey()">Save Stripe Key</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Coming Soon: TCGplayer -->
         <div class="integration-card coming-soon">
             <div class="integration-header">
@@ -614,6 +654,49 @@
         }
 
         loadShopSettings();
+
+        // --- Stripe Payments ---
+        async function loadStripeStatus() {
+            const data = await apiFetch('/api/shop/stripe');
+            const tag = document.getElementById('stripe-tag');
+            const dot = document.getElementById('stripe-dot');
+            const statusText = document.getElementById('stripe-status-text');
+
+            if (data.success && data.configured) {
+                tag.className = 'tag tag-connected';
+                tag.textContent = 'Connected';
+                dot.className = 'status-dot on';
+                statusText.textContent = 'Stripe key configured — payments are active on your storefront';
+                document.getElementById('stripe-key').placeholder = 'sk_•••• (key saved)';
+            } else {
+                tag.className = 'tag tag-not-connected';
+                tag.textContent = 'Not Connected';
+                dot.className = 'status-dot off';
+                statusText.textContent = 'Not configured — storefront checkout is disabled';
+            }
+        }
+
+        async function saveStripeKey() {
+            const key = document.getElementById('stripe-key').value.trim();
+            if (key && !key.startsWith('sk_')) {
+                return alert('Stripe secret key should start with sk_test_ or sk_live_');
+            }
+
+            const data = await apiFetch('/api/shop/stripe', {
+                method: 'PUT',
+                body: JSON.stringify({ stripe_secret_key: key || null })
+            });
+
+            if (data.success) {
+                loadStripeStatus();
+                alert(data.message);
+                document.getElementById('stripe-key').value = '';
+            } else {
+                alert(data.error || 'Failed to save Stripe key');
+            }
+        }
+
+        loadStripeStatus();
     </script>
 </body>
 </html>
