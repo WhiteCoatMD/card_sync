@@ -335,28 +335,22 @@
             </div>
 
             <p class="integration-desc">
-                Accept credit card payments on your storefront. Customers can add cards to their cart and checkout securely via Stripe. Funds go directly to your Stripe account.
+                Accept credit card payments on your storefront. Connect your Stripe account and customers can checkout directly from your store. Funds are deposited to your Stripe account automatically.
             </p>
 
             <div class="status-bar">
                 <div class="status-info">
                     <div class="status-dot off" id="stripe-dot"></div>
-                    <span id="stripe-status-text">Not configured</span>
+                    <span id="stripe-status-text">Not connected</span>
+                </div>
+                <div class="status-actions" id="stripe-actions">
+                    <button class="btn btn-sm" style="background:#635BFF;border-color:#635BFF;" onclick="connectStripe()">Connect Stripe</button>
                 </div>
             </div>
 
-            <div class="connect-form" id="stripe-form">
-                <h3>Stripe Configuration</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Stripe Secret Key</label>
-                        <input type="password" id="stripe-key" placeholder="sk_live_... or sk_test_...">
-                        <div class="help">Find this in your <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:#4a90d9;">Stripe Dashboard → API Keys</a>. Use sk_test_ keys for testing.</div>
-                    </div>
-                </div>
-                <div class="connect-actions">
-                    <button class="btn btn-primary" onclick="saveStripeKey()">Save Stripe Key</button>
-                </div>
+            <div id="stripe-fee-info" style="display:none;background:#12122a;border-radius:8px;padding:14px 18px;margin-top:12px;font-size:13px;color:#aaa;">
+                <strong style="color:#fff;">Platform fee:</strong> <span id="stripe-fee-pct">5</span>% per transaction.
+                Stripe processing fee (2.9% + $0.30) is separate. <a href="pricing.html" style="color:#4a90d9;">Upgrade your plan</a> to reduce platform fees.
             </div>
         </div>
 
@@ -661,39 +655,50 @@
             const tag = document.getElementById('stripe-tag');
             const dot = document.getElementById('stripe-dot');
             const statusText = document.getElementById('stripe-status-text');
+            const actions = document.getElementById('stripe-actions');
+            const feeInfo = document.getElementById('stripe-fee-info');
 
-            if (data.success && data.configured) {
+            if (data.success && data.connected) {
                 tag.className = 'tag tag-connected';
                 tag.textContent = 'Connected';
                 dot.className = 'status-dot on';
-                statusText.textContent = 'Stripe key configured — payments are active on your storefront';
-                document.getElementById('stripe-key').placeholder = 'sk_•••• (key saved)';
+                statusText.textContent = 'Stripe connected — payments are active on your storefront';
+                actions.innerHTML = '<button class="btn btn-sm btn-danger" onclick="disconnectStripe()">Disconnect</button>';
+                feeInfo.style.display = 'block';
+                document.getElementById('stripe-fee-pct').textContent = data.platform_fee_percent;
             } else {
                 tag.className = 'tag tag-not-connected';
                 tag.textContent = 'Not Connected';
                 dot.className = 'status-dot off';
-                statusText.textContent = 'Not configured — storefront checkout is disabled';
+                statusText.textContent = 'Not connected — storefront checkout is disabled';
+                actions.innerHTML = '<button class="btn btn-sm" style="background:#635BFF;border-color:#635BFF;" onclick="connectStripe()">Connect Stripe</button>';
+                feeInfo.style.display = 'block';
+                document.getElementById('stripe-fee-pct').textContent = data.platform_fee_percent || 5;
             }
         }
 
-        async function saveStripeKey() {
-            const key = document.getElementById('stripe-key').value.trim();
-            if (key && !key.startsWith('sk_')) {
-                return alert('Stripe secret key should start with sk_test_ or sk_live_');
-            }
-
-            const data = await apiFetch('/api/shop/stripe', {
-                method: 'PUT',
-                body: JSON.stringify({ stripe_secret_key: key || null })
-            });
-
-            if (data.success) {
-                loadStripeStatus();
-                alert(data.message);
-                document.getElementById('stripe-key').value = '';
+        async function connectStripe() {
+            const data = await apiFetch('/api/stripe/connect');
+            if (data.success && data.redirect_url) {
+                window.location.href = data.redirect_url;
             } else {
-                alert(data.error || 'Failed to save Stripe key');
+                alert(data.error || 'Failed to start Stripe connection');
             }
+        }
+
+        async function disconnectStripe() {
+            if (!confirm('Disconnect Stripe? Customers will not be able to checkout from your store.')) return;
+            const data = await apiFetch('/api/shop/stripe', { method: 'DELETE' });
+            if (data.success) loadStripeStatus();
+        }
+
+        // Check for Stripe callback result
+        if (urlParams.get('stripe') === 'connected') {
+            alert('Stripe connected successfully!');
+            history.replaceState({}, '', '/integrations.html');
+        } else if (urlParams.get('stripe') === 'error') {
+            alert('Stripe connection failed: ' + (urlParams.get('msg') || 'Unknown error'));
+            history.replaceState({}, '', '/integrations.html');
         }
 
         loadStripeStatus();

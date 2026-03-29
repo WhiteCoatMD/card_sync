@@ -1,13 +1,14 @@
 /**
- * Public Checkout API — Guest checkout via Stripe
- * POST /api/public/checkout — create Stripe Checkout Session
+ * Public Checkout API — Guest checkout via Stripe Connect
+ * POST /api/public/checkout — create Stripe Checkout Session with platform fee
  */
 
 const { setCorsHeaders } = require('../../lib/cors-security');
 const { getPool } = require('../../lib/db');
 const { retryQuery } = require('../../lib/db-retry');
 const { getDealerBySubdomain } = require('../../lib/subdomain');
-const { getStripeForDealer } = require('../../lib/stripe');
+const { getStripe, getDealerStripeAccount } = require('../../lib/stripe');
+const { getPlatformFeePercent } = require('../../lib/plans');
 
 const pool = getPool();
 
@@ -23,15 +24,20 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ success: false, error: 'subdomain and items are required' });
         }
 
+        const stripe = getStripe();
+        if (!stripe) {
+            return res.status(500).json({ success: false, error: 'Payment system is not configured' });
+        }
+
         // Look up dealer
         const dealer = await getDealerBySubdomain(subdomain);
         if (!dealer) {
             return res.status(404).json({ success: false, error: 'Store not found' });
         }
 
-        // Get Stripe instance for this dealer
-        const stripe = await getStripeForDealer(dealer.id);
-        if (!stripe) {
+        // Get dealer's Stripe Connect account
+        const dealerAccount = await getDealerStripeAccount(dealer.id);
+        if (!dealerAccount) {
             return res.status(400).json({ success: false, error: 'This store has not set up payments yet' });
         }
 
@@ -92,6 +98,12 @@ module.exports = async function handler(req, res) {
             });
         }
 
+        // Calculate platform fee based on dealer's plan
+        // Stripe fee (2.9% + $0.30) is passed through to dealer automatically by Stripe
+        // Platform fee is our cut on top
+        const feePercent = getPlatformFeePercent(dealerAccount.plan);
+        const platformFee = Math.round(totalAmount * 100 * (feePercent / 100)); // in cents
+
         // Create pending order in DB
         const client = await pool.connect();
         try {
@@ -111,7 +123,7 @@ module.exports = async function handler(req, res) {
                 );
             }
 
-            // Create Stripe Checkout Session
+            // Create Stripe Checkout Session with Connect
             const storeUrl = `https://${subdomain}.collect-sync.com`;
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
@@ -120,13 +132,19 @@ module.exports = async function handler(req, res) {
                 success_url: `${storeUrl}/store.html?order=success&session_id={CHECKOUT_SESSION_ID}`,
                 cancel_url: `${storeUrl}/store.html?order=cancelled`,
                 ...(customer_email ? { customer_email } : {}),
+                payment_intent_data: {
+                    application_fee_amount: platformFee,
+                    transfer_data: {
+                        destination: dealerAccount.accountId,
+                    },
+                },
                 metadata: {
                     order_id: orderId.toString(),
                     dealer_id: dealer.id.toString(),
+                    platform_fee_percent: feePercent.toString(),
                 },
             });
 
-            // Save Stripe session ID on order
             await client.query(
                 'UPDATE orders SET stripe_session_id = $1 WHERE id = $2',
                 [session.id, orderId]
