@@ -24,14 +24,14 @@ module.exports = requireAuth(async function handler(req, res) {
         let items;
         if (all) {
             const result = await retryQuery(
-                () => pool.query('SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE status != $1 ORDER BY id LIMIT 100', ['unlisted']),
+                () => pool.query('SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE user_id = $1 AND status != $2 ORDER BY id LIMIT 100', [req.user.id, 'unlisted']),
                 'Pricing - Get All'
             );
             items = result.rows;
         } else if (item_ids && Array.isArray(item_ids) && item_ids.length > 0) {
-            const placeholders = item_ids.map((_, i) => `$${i + 1}`).join(',');
+            const placeholders = item_ids.map((_, i) => `$${i + 2}`).join(',');
             const result = await retryQuery(
-                () => pool.query(`SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE id IN (${placeholders})`, item_ids),
+                () => pool.query(`SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE user_id = $1 AND id IN (${placeholders})`, [req.user.id, ...item_ids]),
                 'Pricing - Get Items'
             );
             items = result.rows;
@@ -68,7 +68,7 @@ module.exports = requireAuth(async function handler(req, res) {
                         `UPDATE inventory SET ${updateFields.join(', ')} WHERE id = $${idx}`,
                         updateParams
                     );
-                } catch (e) { /* don't fail the lookup */ }
+                } catch (e) { console.error('Failed to save market price for item', priceData.item_id, e.message); }
             }
         }
 

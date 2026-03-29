@@ -44,7 +44,7 @@ module.exports = requireAuth(async function handler(req, res) {
                         `UPDATE inventory SET ${updateFields.join(', ')} WHERE id = $${idx} AND user_id = $${idx + 1}`,
                         [...updateParams, req.user.id]
                     );
-                } catch (e) { /* don't fail the search */ }
+                } catch (e) { console.error('Failed to save market price for item', item_id, e.message); }
             }
         }
 

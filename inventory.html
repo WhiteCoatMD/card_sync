@@ -361,7 +361,7 @@
                     <td>${item.quantity}</td>
                     <td class="price-buy">${item.buy_price ? '$' + parseFloat(item.buy_price).toFixed(2) : '—'}</td>
                     <td class="price">${item.sell_price ? '$' + parseFloat(item.sell_price).toFixed(2) : '—'}</td>
-                    <td id="market-${item.id}" class="price-market"><span class="price-loading">—</span></td>
+                    <td id="market-${item.id}" class="price-market">${item.market_price ? '$' + parseFloat(item.market_price).toFixed(2) : '<span class="price-loading">—</span>'}</td>
                     <td><span class="badge badge-${item.status}">${item.status}</span></td>
                     <td>
                         <button class="btn btn-sm" onclick="editCard(${item.id})">Edit</button>
