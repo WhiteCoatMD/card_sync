@@ -536,7 +536,8 @@
                 statusText.textContent = text;
 
                 actions.innerHTML = `
-                    <button class="btn btn-sm" style="background:#e2261c;border-color:#e2261c;" onclick="syncEbay('push')">Push to eBay (25 items)</button>
+                    <button class="btn btn-sm" style="background:#e2261c;border-color:#e2261c;" onclick="syncEbay('push')">Push to eBay</button>
+                    <button class="btn btn-sm" style="background:#ff9800;border-color:#ff9800;" onclick="relistEbay()">Check & Relist</button>
                     <button class="btn btn-sm btn-danger" onclick="disconnectEbay()">Disconnect</button>
                 `;
             } else {
@@ -575,6 +576,48 @@
             if (!confirm('Disconnect eBay? Your existing eBay listings will remain active.')) return;
             const data = await apiFetch('/api/ebay/status', { method: 'DELETE' });
             if (data.success) loadEbayStatus();
+        }
+
+        async function relistEbay() {
+            const btn = event.target;
+            btn.textContent = 'Checking...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/ebay/relist', { method: 'POST' });
+
+            btn.textContent = 'Check & Relist';
+            btn.disabled = false;
+
+            if (data.success) {
+                alert(data.message + (data.ended_found ? ` (${data.ended_found} ended listings found)` : ''));
+                loadRelistLog();
+            } else {
+                alert(data.error || 'Relist check failed');
+            }
+        }
+
+        async function loadRelistLog() {
+            const data = await apiFetch('/api/ebay/relist');
+            if (!data.success || !data.log || data.log.length === 0) return;
+
+            // Find or create the log container after the eBay card
+            let logEl = document.getElementById('relist-log');
+            if (!logEl) {
+                const ebayCard = document.getElementById('ebay-card') || document.querySelector('.integration-card:nth-child(3)');
+                if (!ebayCard) return;
+                logEl = document.createElement('div');
+                logEl.id = 'relist-log';
+                logEl.style.cssText = 'background:#12122a;border-radius:8px;padding:14px;margin-top:12px;font-size:12px;';
+                ebayCard.appendChild(logEl);
+            }
+
+            logEl.innerHTML = '<strong style="color:#fff;">Recent Relist Activity</strong>' +
+                data.log.slice(0, 10).map(l => `
+                    <div style="padding:6px 0;border-bottom:1px solid #1e1e32;display:flex;justify-content:space-between;">
+                        <span>${l.card_name || 'Item #' + l.inventory_id}</span>
+                        <span style="color:${l.status === 'success' ? '#4caf50' : '#f44336'};">${l.status}${l.new_listing_id ? ' → ' + l.new_listing_id : ''}</span>
+                    </div>
+                `).join('');
         }
 
         // Check for eBay callback result in URL

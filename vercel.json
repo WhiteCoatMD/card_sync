@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/stock-alerts",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/ebay-relist",
+      "schedule": "0 12 * * *"
     }
   ],
   "buildCommand": null,
