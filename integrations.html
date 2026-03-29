@@ -320,6 +320,38 @@
             </div>
         </div>
 
+        <!-- Shipping / Return Address -->
+        <div class="integration-card">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(33,150,243,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="1" y="6" width="22" height="13" rx="2" stroke="#2196f3" stroke-width="2" fill="none"/>
+                        <path d="M1 10h22" stroke="#2196f3" stroke-width="2"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Shipping / Return Address</h2>
+                </div>
+            </div>
+            <p class="integration-desc">Set your return address for shipping labels. This is used as the "from" address when generating labels.</p>
+            <div class="connect-form">
+                <div class="form-row">
+                    <div class="form-group"><label>Name / Business</label><input type="text" id="ship-from-name" placeholder="Your name or shop name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Street Address</label><input type="text" id="ship-from-street" placeholder="123 Main St"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>City</label><input type="text" id="ship-from-city"></div>
+                    <div class="form-group" style="flex:0.4;"><label>State</label><input type="text" id="ship-from-state" maxlength="2" placeholder="TN"></div>
+                    <div class="form-group" style="flex:0.4;"><label>ZIP</label><input type="text" id="ship-from-zip" maxlength="10"></div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn btn-primary" onclick="saveReturnAddress()">Save Address</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Stripe Payments -->
         <div class="integration-card" id="stripe-card">
             <div class="integration-header">
@@ -748,6 +780,35 @@
         }
 
         loadStripeStatus();
+
+        // --- Return Address ---
+        async function loadReturnAddress() {
+            const data = await apiFetch('/api/shipping/address');
+            if (data.success && data.address) {
+                document.getElementById('ship-from-name').value = data.address.ship_from_name || '';
+                document.getElementById('ship-from-street').value = data.address.ship_from_street1 || '';
+                document.getElementById('ship-from-city').value = data.address.ship_from_city || '';
+                document.getElementById('ship-from-state').value = data.address.ship_from_state || '';
+                document.getElementById('ship-from-zip').value = data.address.ship_from_zip || '';
+            }
+        }
+
+        async function saveReturnAddress() {
+            const data = await apiFetch('/api/shipping/address', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name: document.getElementById('ship-from-name').value.trim(),
+                    street1: document.getElementById('ship-from-street').value.trim(),
+                    city: document.getElementById('ship-from-city').value.trim(),
+                    state: document.getElementById('ship-from-state').value.trim(),
+                    zip: document.getElementById('ship-from-zip').value.trim(),
+                })
+            });
+            if (data.success) alert('Return address saved!');
+            else alert(data.error || 'Failed to save');
+        }
+
+        loadReturnAddress();
     </script>
 </body>
 </html>

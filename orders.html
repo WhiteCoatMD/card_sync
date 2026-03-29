@@ -59,6 +59,16 @@
         .order-item-row input { flex: 1; padding: 8px; border: 1px solid #333; border-radius: 4px; background: #1a1a2e; color: #fff; font-size: 13px; }
         .order-item-row input:focus { outline: none; border-color: #4a90d9; }
         .order-total { text-align: right; font-size: 18px; font-weight: 700; margin-top: 12px; padding-top: 12px; border-top: 1px solid #333; }
+        .ship-btn { background: #2196f3; border-color: #2196f3; }
+        .tracking-link { color: #4a90d9; text-decoration: none; font-size: 12px; }
+        .rate-option { background: #0d0d1a; border: 1px solid #333; border-radius: 6px; padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s; }
+        .rate-option:hover, .rate-option.selected { border-color: #4a90d9; }
+        .rate-carrier { font-weight: 600; font-size: 13px; }
+        .rate-service { color: #888; font-size: 12px; }
+        .rate-price { font-weight: 700; color: #4caf50; font-size: 15px; }
+        .rate-days { color: #888; font-size: 11px; }
+        .label-success { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 16px; text-align: center; margin-top: 16px; }
+        .label-success a { color: #4caf50; font-weight: 700; text-decoration: none; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -98,7 +108,9 @@
                     <th>Items</th>
                     <th>Total</th>
                     <th>Status</th>
+                    <th>Shipping</th>
                     <th>Date</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody id="orders-body">
@@ -137,9 +149,53 @@
         </div>
     </div>
 
+    <!-- Shipping Modal -->
+    <div class="modal-overlay" id="ship-modal" onclick="if(event.target===this)closeShipModal()">
+        <div class="modal">
+            <h2>Ship Order <span id="ship-order-id"></span></h2>
+            <div id="ship-step-address">
+                <div class="form-row">
+                    <div class="form-group"><label>Recipient Name *</label><input type="text" id="ship-name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Street Address *</label><input type="text" id="ship-street1"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Apt/Suite</label><input type="text" id="ship-street2"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>City *</label><input type="text" id="ship-city"></div>
+                    <div class="form-group" style="flex:0.5;"><label>State *</label><input type="text" id="ship-state" maxlength="2" placeholder="TN"></div>
+                    <div class="form-group" style="flex:0.5;"><label>ZIP *</label><input type="text" id="ship-zip" maxlength="10"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.5;"><label>Weight (oz)</label><input type="number" id="ship-weight" value="3" step="0.5" min="0.5"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn" onclick="closeShipModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="getRates()">Get Rates</button>
+                </div>
+            </div>
+            <div id="ship-step-rates" style="display:none;">
+                <div id="rates-list"></div>
+                <div class="modal-actions">
+                    <button class="btn" onclick="document.getElementById('ship-step-address').style.display='';document.getElementById('ship-step-rates').style.display='none';">Back</button>
+                    <button class="btn btn-primary" id="buy-label-btn" onclick="purchaseLabel()" disabled>Select a rate first</button>
+                </div>
+            </div>
+            <div id="ship-step-done" style="display:none;"></div>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('auth_token');
         if (!token) window.location.href = 'login.html';
+
+        let hasShipping = false;
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(r => r.json()).then(data => {
+                if (data.success) hasShipping = data.user.features.includes('shipping_labels');
+            });
 
         let currentPage = 1;
         let orderType = 'sell';
@@ -171,7 +227,7 @@
             const tbody = document.getElementById('orders-body');
 
             if (!data.success || data.orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty">No orders found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty">No orders found.</td></tr>';
                 document.getElementById('pagination').innerHTML = '';
                 return;
             }
@@ -184,10 +240,16 @@
                     <td>${o.item_count} item${o.item_count != 1 ? 's' : ''}</td>
                     <td class="price ${o.type === 'sell' ? 'price-sell' : 'price-buy'}">$${parseFloat(o.total_amount).toFixed(2)}</td>
                     <td><span class="badge badge-${o.status}">${o.status}</span></td>
+                    <td>${o.shipping_tracking ? '<a class="tracking-link" href="https://tools.usps.com/go/TrackConfirmAction?tLabels=' + esc(o.shipping_tracking) + '" target="_blank">' + esc(o.shipping_tracking) + '</a>' : '<span style="color:#555;">—</span>'}</td>
                     <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                    <td>${o.type === 'sell' && o.status === 'completed' && !o.shipping_tracking
+                        ? (hasShipping
+                            ? '<button class="btn btn-sm ship-btn" onclick="event.stopPropagation();openShipModal(' + o.id + ',\'' + esc(o.customer_name || '') + '\')">Ship</button>'
+                            : '<button class="btn btn-sm" style="opacity:0.35;" onclick="event.stopPropagation();alert(\'Upgrade to Business plan to create shipping labels\')" title="Upgrade to unlock">&#128274; Ship</button>')
+                        : (o.shipping_label_url ? '<a href="' + esc(o.shipping_label_url) + '" target="_blank" class="btn btn-sm" style="font-size:11px;">Label</a>' : '')}</td>
                 </tr>
                 <tr class="order-detail" id="detail-${o.id}">
-                    <td colspan="7">
+                    <td colspan="9">
                         ${o.notes ? `<p style="color:#888;margin-bottom:8px;">Notes: ${esc(o.notes)}</p>` : ''}
                         <div id="detail-items-${o.id}"><em style="color:#666">Click to load details...</em></div>
                     </td>
@@ -333,6 +395,135 @@
         }
 
         loadOrders();
+
+        // --- Shipping ---
+        let shipOrderId = null;
+        let shipShipmentId = null;
+        let selectedRateId = null;
+        let shipToAddress = null;
+
+        function openShipModal(orderId, customerName) {
+            shipOrderId = orderId;
+            shipShipmentId = null;
+            selectedRateId = null;
+            document.getElementById('ship-order-id').textContent = '#' + orderId;
+            document.getElementById('ship-name').value = customerName || '';
+            document.getElementById('ship-street1').value = '';
+            document.getElementById('ship-street2').value = '';
+            document.getElementById('ship-city').value = '';
+            document.getElementById('ship-state').value = '';
+            document.getElementById('ship-zip').value = '';
+            document.getElementById('ship-weight').value = '3';
+            document.getElementById('ship-step-address').style.display = '';
+            document.getElementById('ship-step-rates').style.display = 'none';
+            document.getElementById('ship-step-done').style.display = 'none';
+            document.getElementById('ship-modal').classList.add('active');
+        }
+
+        function closeShipModal() { document.getElementById('ship-modal').classList.remove('active'); }
+
+        async function getRates() {
+            const name = document.getElementById('ship-name').value.trim();
+            const street1 = document.getElementById('ship-street1').value.trim();
+            const city = document.getElementById('ship-city').value.trim();
+            const state = document.getElementById('ship-state').value.trim();
+            const zip = document.getElementById('ship-zip').value.trim();
+
+            if (!name || !street1 || !city || !state || !zip) return alert('Fill in all required address fields');
+
+            shipToAddress = {
+                name, street1,
+                street2: document.getElementById('ship-street2').value.trim(),
+                city, state, zip
+            };
+
+            const btn = event.target;
+            btn.textContent = 'Getting rates...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/shipping/rates', {
+                method: 'POST',
+                body: JSON.stringify({
+                    order_id: shipOrderId,
+                    to_address: shipToAddress,
+                    weight_oz: parseFloat(document.getElementById('ship-weight').value) || 3,
+                })
+            });
+
+            btn.textContent = 'Get Rates';
+            btn.disabled = false;
+
+            if (!data.success) return alert(data.error || 'Failed to get rates');
+
+            shipShipmentId = data.shipment_id;
+            selectedRateId = null;
+
+            const ratesList = document.getElementById('rates-list');
+            ratesList.innerHTML = '<p style="color:#888;font-size:13px;margin-bottom:10px;">Select a shipping rate:</p>' +
+                data.rates.map(r => `
+                    <div class="rate-option" onclick="selectRate('${r.id}', this)">
+                        <div>
+                            <div class="rate-carrier">${esc(r.carrier)}</div>
+                            <div class="rate-service">${esc(r.service)}${r.delivery_days ? ' — ' + r.delivery_days + ' day' + (r.delivery_days > 1 ? 's' : '') : ''}</div>
+                        </div>
+                        <div class="rate-price">$${r.rate.toFixed(2)}</div>
+                    </div>
+                `).join('');
+
+            document.getElementById('ship-step-address').style.display = 'none';
+            document.getElementById('ship-step-rates').style.display = '';
+            document.getElementById('buy-label-btn').disabled = true;
+            document.getElementById('buy-label-btn').textContent = 'Select a rate first';
+        }
+
+        function selectRate(rateId, el) {
+            selectedRateId = rateId;
+            document.querySelectorAll('.rate-option').forEach(r => r.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('buy-label-btn').disabled = false;
+            document.getElementById('buy-label-btn').textContent = 'Buy Label — $' + el.querySelector('.rate-price').textContent.replace('$', '');
+        }
+
+        async function purchaseLabel() {
+            if (!shipShipmentId || !selectedRateId) return;
+
+            const btn = document.getElementById('buy-label-btn');
+            btn.textContent = 'Purchasing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/shipping/purchase', {
+                method: 'POST',
+                body: JSON.stringify({
+                    order_id: shipOrderId,
+                    shipment_id: shipShipmentId,
+                    rate_id: selectedRateId,
+                    to_address: shipToAddress,
+                    weight_oz: parseFloat(document.getElementById('ship-weight').value) || 3,
+                })
+            });
+
+            if (!data.success) {
+                btn.textContent = 'Buy Label';
+                btn.disabled = false;
+                return alert(data.error || 'Failed to purchase label');
+            }
+
+            document.getElementById('ship-step-rates').style.display = 'none';
+            document.getElementById('ship-step-done').style.display = '';
+            document.getElementById('ship-step-done').innerHTML = `
+                <div class="label-success">
+                    <p style="margin-bottom:8px;">Label purchased!</p>
+                    <a href="${esc(data.label_url)}" target="_blank">Download Label (PDF)</a>
+                    <p style="margin-top:12px;color:#888;font-size:13px;">
+                        ${esc(data.carrier)} ${esc(data.service)}<br>
+                        Tracking: <strong>${esc(data.tracking_number)}</strong>
+                    </p>
+                </div>
+                <div class="modal-actions" style="margin-top:16px;">
+                    <button class="btn btn-primary" onclick="closeShipModal();loadOrders();">Done</button>
+                </div>
+            `;
+        }
     </script>
 </body>
 </html>

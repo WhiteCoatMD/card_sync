@@ -96,6 +96,19 @@
         const token = localStorage.getItem('auth_token');
         if (!token) window.location.href = 'login.html';
 
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(r => r.json()).then(data => {
+                if (data.success && !data.user.features.includes('analytics')) {
+                    document.querySelector('.container').innerHTML = `
+                        <div style="text-align:center;padding:4rem;">
+                            <h2 style="margin-bottom:1rem;">Analytics Dashboard</h2>
+                            <p style="color:#888;margin-bottom:1.5rem;">Track profit margins, top sellers, aging inventory, and revenue trends.</p>
+                            <p style="color:#ff9800;margin-bottom:1.5rem;">&#128274; This feature requires a Pro plan or higher.</p>
+                            <a href="pricing.html" class="btn btn-primary" style="padding:12px 24px;font-size:15px;">Upgrade Your Plan</a>
+                        </div>`;
+                }
+            });
+
         async function apiFetch(url) {
             const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
             return res.json();

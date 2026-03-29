@@ -47,10 +47,10 @@
             <a href="inventory.html" class="btn">Inventory</a>
             <a href="orders.html" class="btn">Orders</a>
             <a href="marketplace.html" class="btn">Marketplace</a>
-            <a href="analytics.html" class="btn">Analytics</a>
+            <a href="analytics.html" class="btn" data-feature="analytics">Analytics</a>
             <a href="buylist-review.html" class="btn">Buylist</a>
             <a href="buying.html" class="btn">Buying</a>
-            <a href="grading.html" class="btn">Grading</a>
+            <a href="grading.html" class="btn" data-feature="grading_tracker">Grading</a>
             <a href="integrations.html" class="btn">Integrations</a>
             <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Super Admin</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
@@ -123,6 +123,26 @@
         document.getElementById('user-name').textContent = user.email || '';
         document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
         if (user.isAdmin) document.getElementById('admin-link').style.display = '';
+
+        // Feature gating — grey out locked nav items
+        async function checkFeatures() {
+            try {
+                const data = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json());
+                if (!data.success) return;
+                const features = data.user.features || [];
+                document.querySelectorAll('[data-feature]').forEach(el => {
+                    const feat = el.dataset.feature;
+                    if (!features.includes(feat)) {
+                        el.style.opacity = '0.35';
+                        el.style.pointerEvents = 'none';
+                        el.title = 'Upgrade your plan to unlock this feature';
+                        el.insertAdjacentHTML('afterend',
+                            '<a href="pricing.html" style="font-size:10px;color:#ff9800;text-decoration:none;margin-left:-4px;" title="Upgrade to unlock">&#128274;</a>');
+                    }
+                });
+            } catch(e) {}
+        }
+        checkFeatures();
 
         function getAuthToken() { return localStorage.getItem('auth_token'); }
 
