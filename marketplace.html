@@ -172,7 +172,7 @@
             }
 
             grid.innerHTML = data.cards.map(card => `
-                <div class="card" onclick='showCard(${JSON.stringify(card).replace(/'/g, "&#39;")})' style="cursor:pointer;"
+                <div class="card" onclick='showCard(${JSON.stringify(card).replace(/'/g, "&#39;")})' style="cursor:pointer;">
                     <div class="card-img">
                         ${card.image_url
                             ? `<img src="${esc(card.image_url)}" alt="${esc(card.name)}">`
