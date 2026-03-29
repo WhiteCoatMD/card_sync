@@ -3,6 +3,18 @@
   "devCommand": null,
   "installCommand": null,
   "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/:path((?!api|_next|favicon\\.ico|.*\\..*).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<sub>[a-z0-9][a-z0-9-]*)\\.collect-sync\\.com"
+        }
+      ],
+      "destination": "/store.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

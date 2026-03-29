@@ -254,6 +254,72 @@
             </div>
         </div>
 
+        <!-- Online Store / Subdomain -->
+        <div class="integration-card" id="shop-card">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(156,39,176,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#9c27b0" stroke-width="2" fill="none"/>
+                        <path d="M2 8h20" stroke="#9c27b0" stroke-width="2"/>
+                        <circle cx="6" cy="6" r="1" fill="#9c27b0"/>
+                        <circle cx="9" cy="6" r="1" fill="#9c27b0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Online Store <span class="tag tag-not-connected" id="shop-tag">Not Set Up</span></h2>
+                </div>
+            </div>
+
+            <p class="integration-desc">
+                Get your own branded storefront at <strong>yourshop.collect-sync.com</strong>. Customers can browse and buy your cards directly from your personalized store page.
+            </p>
+
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="shop-dot"></div>
+                    <span id="shop-status-text">Not configured</span>
+                </div>
+                <div class="status-actions" id="shop-status-actions"></div>
+            </div>
+
+            <div class="connect-form" id="shop-form">
+                <h3>Store Settings</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subdomain</label>
+                        <div style="display:flex;align-items:center;gap:0;">
+                            <input type="text" id="shop-subdomain" placeholder="yourshop" style="border-radius:6px 0 0 6px;">
+                            <span style="background:#0d0d1a;border:1px solid #333;border-left:0;padding:10px 12px;border-radius:0 6px 6px 0;font-size:14px;color:#666;white-space:nowrap;">.collect-sync.com</span>
+                        </div>
+                        <div class="help">3-63 characters. Letters, numbers, and hyphens only.</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Store Name</label>
+                        <input type="text" id="shop-name" placeholder="My Card Shop">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Store Description</label>
+                        <input type="text" id="shop-description" placeholder="Trading cards, sealed products, and more">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="shop-enabled" style="width:auto;">
+                            Enable store (make it publicly visible)
+                        </label>
+                    </div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn btn-primary" onclick="saveShopSettings()">Save Store Settings</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Coming Soon: TCGplayer -->
         <div class="integration-card coming-soon">
             <div class="integration-header">
@@ -488,6 +554,66 @@
         }
 
         loadEbayStatus();
+
+        // --- Online Store ---
+        async function loadShopSettings() {
+            const data = await apiFetch('/api/shop');
+            const tag = document.getElementById('shop-tag');
+            const dot = document.getElementById('shop-dot');
+            const statusText = document.getElementById('shop-status-text');
+            const actions = document.getElementById('shop-status-actions');
+
+            if (data.success && data.shop.subdomain) {
+                document.getElementById('shop-subdomain').value = data.shop.subdomain;
+                document.getElementById('shop-name').value = data.shop.shop_name || '';
+                document.getElementById('shop-description').value = data.shop.shop_description || '';
+                document.getElementById('shop-enabled').checked = data.shop.shop_enabled;
+
+                if (data.shop.shop_enabled) {
+                    tag.className = 'tag tag-connected';
+                    tag.textContent = 'Live';
+                    dot.className = 'status-dot on';
+                    statusText.innerHTML = '<a href="https://' + data.shop.subdomain + '.collect-sync.com" target="_blank" style="color:#4a90d9;">' + data.shop.subdomain + '.collect-sync.com</a>';
+                    actions.innerHTML = '<a href="https://' + data.shop.subdomain + '.collect-sync.com" target="_blank" class="btn btn-sm btn-primary">Visit Store</a>';
+                } else {
+                    tag.className = 'tag tag-not-connected';
+                    tag.textContent = 'Disabled';
+                    dot.className = 'status-dot off';
+                    statusText.textContent = data.shop.subdomain + '.collect-sync.com (disabled)';
+                    actions.innerHTML = '';
+                }
+            }
+        }
+
+        async function saveShopSettings() {
+            const subdomain = document.getElementById('shop-subdomain').value.trim().toLowerCase();
+            const shop_name = document.getElementById('shop-name').value.trim();
+            const shop_description = document.getElementById('shop-description').value.trim();
+            const shop_enabled = document.getElementById('shop-enabled').checked;
+
+            if (!subdomain) return alert('Please enter a subdomain');
+
+            const btn = event.target;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/shop', {
+                method: 'PUT',
+                body: JSON.stringify({ subdomain, shop_name, shop_description, shop_enabled })
+            });
+
+            btn.textContent = 'Save Store Settings';
+            btn.disabled = false;
+
+            if (data.success) {
+                loadShopSettings();
+                alert('Store settings saved!' + (shop_enabled ? ' Your store is live at ' + subdomain + '.collect-sync.com' : ''));
+            } else {
+                alert(data.error || 'Failed to save store settings');
+            }
+        }
+
+        loadShopSettings();
     </script>
 </body>
 </html>

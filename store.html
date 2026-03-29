@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Store...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .header-desc { font-size: 13px; color: #888; margin-top: 4px; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+        .toolbar input, .toolbar select { padding: 8px 12px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; }
+        .toolbar input:focus, .toolbar select:focus { outline: none; border-color: #4a90d9; }
+        .toolbar input[type="text"] { width: 250px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .card { background: #1a1a2e; border-radius: 10px; border: 1px solid #2a2a3e; overflow: hidden; transition: transform 0.15s, border-color 0.15s; cursor: pointer; }
+        .card:hover { transform: translateY(-2px); border-color: #4a90d9; }
+        .card-img { width: 100%; height: 200px; background: #12122a; display: flex; align-items: center; justify-content: center; color: #444; font-size: 48px; overflow: hidden; }
+        .card-img img { width: 100%; height: 100%; object-fit: contain; }
+        .card-body { padding: 16px; }
+        .card-body h3 { font-size: 15px; margin-bottom: 6px; }
+        .card-meta { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .card-meta span { margin-right: 10px; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .card-price { font-size: 20px; font-weight: 700; color: #4caf50; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-condition { background: rgba(74,144,217,0.2); color: #4a90d9; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; }
+        .empty { text-align: center; padding: 3rem; color: #666; }
+        .stats { display: flex; gap: 16px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .stat-badge { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #aaa; cursor: pointer; }
+        .stat-badge.active { border-color: #4a90d9; color: #fff; }
+        .stat-badge strong { color: #fff; }
+        .powered-by { text-align: center; padding: 2rem; font-size: 12px; color: #555; }
+        .powered-by a { color: #4a90d9; text-decoration: none; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a2e; border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-card-img { width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; background: #12122a; margin-bottom: 16px; }
+        .modal-card-placeholder { width: 100%; height: 200px; background: #12122a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 64px; color: #333; margin-bottom: 16px; }
+        .modal h2 { font-size: 1.2rem; margin-bottom: 8px; }
+        .modal-meta { font-size: 13px; color: #888; margin-bottom: 16px; }
+        .modal-meta span { margin-right: 12px; }
+        .modal-price { font-size: 28px; font-weight: 700; color: #4caf50; margin-bottom: 16px; }
+        .modal-details { font-size: 13px; color: #aaa; line-height: 1.6; }
+        .modal-close { margin-top: 16px; }
+
+        .store-not-found { text-align: center; padding: 4rem 2rem; }
+        .store-not-found h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+        .store-not-found p { color: #888; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1 id="store-name">Loading...</h1>
+            <div class="header-desc" id="store-desc"></div>
+        </div>
+        <div class="nav">
+            <a href="https://collect-sync.com" class="btn">Powered by Collect Sync</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="store-content">
+            <div class="stats" id="category-badges"></div>
+
+            <div class="toolbar">
+                <input type="text" id="search" placeholder="Search cards..." oninput="debounceLoad()">
+                <select id="filter-condition" onchange="loadStore()">
+                    <option value="">All Conditions</option>
+                    <option value="mint">Mint</option>
+                    <option value="near_mint">Near Mint</option>
+                    <option value="lightly_played">Lightly Played</option>
+                    <option value="moderately_played">Moderately Played</option>
+                    <option value="heavily_played">Heavily Played</option>
+                    <option value="damaged">Damaged</option>
+                </select>
+                <select id="sort" onchange="loadStore()">
+                    <option value="created_at-desc">Newest First</option>
+                    <option value="created_at-asc">Oldest First</option>
+                    <option value="sell_price-asc">Price: Low to High</option>
+                    <option value="sell_price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A-Z</option>
+                    <option value="name-desc">Name: Z-A</option>
+                </select>
+            </div>
+
+            <div class="cards-grid" id="cards-grid"></div>
+
+            <div class="modal-overlay" id="card-modal" onclick="if(event.target===this)closeCardModal()">
+                <div class="modal" id="card-modal-content"></div>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+
+        <div id="store-not-found" class="store-not-found" style="display:none;">
+            <h2>Store Not Found</h2>
+            <p>This store doesn't exist or hasn't been set up yet.</p>
+            <p style="margin-top: 1rem;"><a href="https://collect-sync.com" class="btn btn-primary">Create Your Own Store</a></p>
+        </div>
+    </div>
+
+    <div class="powered-by">
+        Powered by <a href="https://collect-sync.com">Collect Sync</a> &mdash; Inventory management for card dealers
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let selectedCategory = '';
+        let debounceTimer;
+        let storeSubdomain = '';
+
+        const conditionLabels = { mint: 'Mint', near_mint: 'Near Mint', lightly_played: 'Lightly Played', moderately_played: 'Mod. Played', heavily_played: 'Heavily Played', damaged: 'Damaged' };
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function debounceLoad() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => { currentPage = 1; loadStore(); }, 300);
+        }
+
+        function selectCategory(cat) {
+            selectedCategory = selectedCategory === cat ? '' : cat;
+            currentPage = 1;
+            loadStore();
+        }
+
+        // Detect subdomain from hostname
+        function detectSubdomain() {
+            const host = window.location.hostname.toLowerCase();
+            const roots = ['collect-sync.com', 'cardsync-lemon.vercel.app', 'localhost'];
+            for (const root of roots) {
+                if (host.endsWith('.' + root)) {
+                    const sub = host.slice(0, -(root.length + 1));
+                    if (sub && !sub.includes('.') && sub !== 'www' && sub !== 'api') return sub;
+                }
+            }
+            // Fallback: check URL param
+            const params = new URLSearchParams(window.location.search);
+            return params.get('store') || '';
+        }
+
+        async function loadStore() {
+            if (!storeSubdomain) {
+                document.getElementById('store-content').style.display = 'none';
+                document.getElementById('store-not-found').style.display = 'block';
+                return;
+            }
+
+            const params = new URLSearchParams({ subdomain: storeSubdomain, page: currentPage, limit: 50 });
+            const search = document.getElementById('search').value;
+            const condition = document.getElementById('filter-condition').value;
+            const [sort, order] = document.getElementById('sort').value.split('-');
+
+            if (search) params.set('search', search);
+            if (selectedCategory) params.set('category', selectedCategory);
+            if (condition) params.set('condition', condition);
+            params.set('sort', sort);
+            params.set('order', order);
+
+            // API calls go to the main domain
+            const apiBase = window.location.hostname.includes('localhost')
+                ? ''
+                : 'https://collect-sync.com';
+
+            const data = await fetch(`${apiBase}/api/public/store?${params}`).then(r => r.json());
+
+            if (!data.success) {
+                document.getElementById('store-content').style.display = 'none';
+                document.getElementById('store-not-found').style.display = 'block';
+                return;
+            }
+
+            // Set store info
+            document.title = data.store.name + ' — Collect Sync';
+            document.getElementById('store-name').textContent = data.store.name;
+            document.getElementById('store-desc').textContent = data.store.description;
+
+            const grid = document.getElementById('cards-grid');
+
+            // Category badges
+            if (data.categories) {
+                const badges = document.getElementById('category-badges');
+                badges.innerHTML = data.categories.map(c =>
+                    `<div class="stat-badge${selectedCategory === c.category ? ' active' : ''}" onclick="selectCategory('${esc(c.category)}')">
+                        <strong>${c.count}</strong> ${esc(c.category.charAt(0).toUpperCase() + c.category.slice(1))}
+                    </div>`
+                ).join('');
+            }
+
+            if (!data.cards || data.cards.length === 0) {
+                grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">No cards found.</div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            grid.innerHTML = data.cards.map(card => `
+                <div class="card" onclick='showCard(${JSON.stringify(card).replace(/'/g, "&#39;")})'>
+                    <div class="card-img">
+                        ${card.image_url
+                            ? `<img src="${esc(card.image_url)}" alt="${esc(card.name)}">`
+                            : '&#127183;'}
+                    </div>
+                    <div class="card-body">
+                        <h3>${esc(card.name)}</h3>
+                        <div class="card-meta">
+                            <span>${esc(card.category)}</span>
+                            ${card.set_name ? `<span>${esc(card.set_name)}</span>` : ''}
+                            ${card.card_number ? `<span>#${esc(card.card_number)}</span>` : ''}
+                            ${card.rarity ? `<span>${esc(card.rarity)}</span>` : ''}
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-price">${card.sell_price ? '$' + parseFloat(card.sell_price).toFixed(2) : 'Price TBD'}</span>
+                            <span class="badge badge-condition">${conditionLabels[card.condition] || card.condition}</span>
+                        </div>
+                        ${card.quantity > 1 ? `<div style="font-size:12px;color:#888;margin-top:6px;">${card.quantity} available</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Pagination
+            const pages = Math.ceil(data.total / data.limit);
+            if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+            let html = '';
+            for (let i = 1; i <= pages; i++) {
+                html += `<button class="btn btn-sm${i === data.page ? ' btn-primary' : ''}" onclick="currentPage=${i};loadStore()">${i}</button>`;
+            }
+            document.getElementById('pagination').innerHTML = html;
+        }
+
+        function showCard(card) {
+            const modal = document.getElementById('card-modal-content');
+            modal.innerHTML = `
+                ${card.image_url
+                    ? '<img class="modal-card-img" src="' + esc(card.image_url) + '" alt="' + esc(card.name) + '">'
+                    : '<div class="modal-card-placeholder">&#127183;</div>'}
+                <h2>${esc(card.name)}</h2>
+                <div class="modal-meta">
+                    <span>${esc(card.category)}</span>
+                    ${card.set_name ? '<span>' + esc(card.set_name) + '</span>' : ''}
+                    ${card.card_number ? '<span>#' + esc(card.card_number) + '</span>' : ''}
+                    ${card.rarity ? '<span>' + esc(card.rarity) + '</span>' : ''}
+                </div>
+                <div class="modal-price">${card.sell_price ? '$' + parseFloat(card.sell_price).toFixed(2) : 'Price TBD'}</div>
+                <div class="modal-details">
+                    <strong>Condition:</strong> ${conditionLabels[card.condition] || card.condition}<br>
+                    <strong>Available:</strong> ${card.quantity} in stock
+                    ${card.description ? '<br><br>' + esc(card.description) : ''}
+                </div>
+                <div class="modal-close"><button class="btn" onclick="closeCardModal()">Close</button></div>
+            `;
+            document.getElementById('card-modal').classList.add('active');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.remove('active');
+        }
+
+        // Initialize
+        storeSubdomain = detectSubdomain();
+        loadStore();
+    </script>
+</body>
+</html>
