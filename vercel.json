@@ -3,26 +3,13 @@
   "devCommand": null,
   "installCommand": null,
   "outputDirectory": ".",
-  "redirects": [
-    {
-      "source": "/:path(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.collect-sync.com"
-        }
-      ],
-      "destination": "https://collect-sync.com/:path",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/:path((?!api|_next|favicon\\.ico|.*\\..*).*)",
       "has": [
         {
           "type": "host",
-          "value": "(?!www)(?<sub>[a-z0-9][a-z0-9-]*)\\.collect-sync\\.com"
+          "value": "(?<sub>[a-z0-9][a-z0-9-]+)\\.collect-sync\\.com"
         }
       ],
       "destination": "/store.html"
