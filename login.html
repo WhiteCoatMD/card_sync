@@ -55,7 +55,8 @@
                 if (data.success) {
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = 'admin.html';
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    window.location.href = data.user.isAdmin ? 'super-admin.html' : 'admin.html';
                 } else {
                     errorEl.textContent = data.error || 'Login failed';
                     errorEl.style.display = 'block';

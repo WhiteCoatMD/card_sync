@@ -50,6 +50,7 @@
             <a href="analytics.html" class="btn">Analytics</a>
             <a href="buylist-review.html" class="btn">Buylist</a>
             <a href="integrations.html" class="btn">Integrations</a>
+            <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Super Admin</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
             <button class="btn" onclick="logout()">Logout</button>
         </div>
@@ -119,6 +120,7 @@
 
         document.getElementById('user-name').textContent = user.email || '';
         document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
+        if (user.isAdmin) document.getElementById('admin-link').style.display = '';
 
         function getAuthToken() { return localStorage.getItem('auth_token'); }
 

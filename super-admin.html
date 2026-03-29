@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Super Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .header h1 span { color: #f44336; font-size: 12px; background: rgba(244,67,54,0.15); padding: 3px 10px; border-radius: 4px; margin-left: 10px; vertical-align: middle; font-weight: 600; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #888; font-size: 14px; margin-bottom: 2rem; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 2rem; }
+        .stat-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; }
+        .stat-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; }
+        .stat-card .value.green { color: #4caf50; }
+        .stat-card .value.blue { color: #4a90d9; }
+        .stat-card .value.orange { color: #ff9800; }
+        .stat-card .value.purple { color: #9c27b0; }
+
+        /* Dealers Table */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .table-header h2 { font-size: 1.1rem; }
+        .search-box { padding: 8px 14px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; width: 250px; }
+        .search-box:focus { outline: none; border-color: #4a90d9; }
+
+        table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 10px; overflow: hidden; border: 1px solid #2a2a3e; }
+        thead th { background: #12122a; padding: 12px 14px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; font-weight: 600; border-bottom: 1px solid #2a2a3e; }
+        tbody td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #1e1e32; vertical-align: middle; }
+        tbody tr:hover { background: #1e1e36; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-active { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .badge-trial { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .badge-free { background: rgba(158,158,158,0.15); color: #9e9e9e; }
+        .badge-expired { background: rgba(244,67,54,0.15); color: #f44336; }
+        .badge-admin { background: rgba(244,67,54,0.15); color: #f44336; }
+        .badge-pro { background: rgba(74,144,217,0.15); color: #4a90d9; }
+        .badge-business { background: rgba(156,39,176,0.15); color: #9c27b0; }
+        .badge-shop { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .badge-store { background: rgba(156,39,176,0.15); color: #9c27b0; }
+
+        .integrations-icons { display: flex; gap: 4px; }
+        .int-icon { width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .int-ebay { background: rgba(226,38,28,0.15); color: #e2261c; }
+        .int-sheets { background: rgba(15,157,88,0.15); color: #0f9d58; }
+        .int-store { background: rgba(156,39,176,0.15); color: #9c27b0; }
+
+        .actions-cell { display: flex; gap: 4px; }
+
+        /* Edit Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a2e; border-radius: 12px; padding: 30px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { font-size: 1.1rem; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+        .form-group select, .form-group input { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #4a90d9; }
+        .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; }
+        .checkbox-row input { width: auto; }
+
+        .empty { text-align: center; padding: 3rem; color: #666; }
+
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync <span>SUPER ADMIN</span></h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dealer Dashboard</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+            <a href="integrations.html" class="btn">Integrations</a>
+            <a href="/" class="btn">Homepage</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Platform Overview</h1>
+        <p class="page-subtitle">Manage all dealers, subscriptions, and platform stats.</p>
+
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="label">Total Dealers</div><div class="value" id="s-dealers">—</div></div>
+            <div class="stat-card"><div class="label">Active Subscriptions</div><div class="value green" id="s-active">—</div></div>
+            <div class="stat-card"><div class="label">Trial Users</div><div class="value orange" id="s-trial">—</div></div>
+            <div class="stat-card"><div class="label">Total Cards Listed</div><div class="value blue" id="s-cards">—</div></div>
+            <div class="stat-card"><div class="label">Active Stores</div><div class="value purple" id="s-stores">—</div></div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card"><div class="label">Available Cards</div><div class="value" id="s-available">—</div></div>
+            <div class="stat-card"><div class="label">Total Orders</div><div class="value" id="s-orders">—</div></div>
+            <div class="stat-card"><div class="label">Total Revenue</div><div class="value green" id="s-revenue">—</div></div>
+            <div class="stat-card"><div class="label">Integrations</div><div class="value" id="s-integrations">—</div></div>
+        </div>
+
+        <div class="table-header">
+            <h2>All Dealers</h2>
+            <input type="text" class="search-box" id="search" placeholder="Search dealers..." oninput="filterDealers()">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Dealer</th>
+                    <th>Plan</th>
+                    <th>Status</th>
+                    <th>Cards</th>
+                    <th>Value</th>
+                    <th>Store</th>
+                    <th>Integrations</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="dealers-table"></tbody>
+        </table>
+    </div>
+
+    <!-- Edit Dealer Modal -->
+    <div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <h2 id="modal-title">Edit Dealer</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+                <label>Plan</label>
+                <select id="edit-plan">
+                    <option value="free">Free (250 cards)</option>
+                    <option value="pro">Pro (5,000 cards)</option>
+                    <option value="business">Business (25,000 cards)</option>
+                    <option value="shop">Shop (Unlimited)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Card Limit</label>
+                <input type="number" id="edit-limit" placeholder="250">
+            </div>
+            <div class="form-group">
+                <label>Subscription Status</label>
+                <select id="edit-status">
+                    <option value="trial">Trial</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="past_due">Past Due</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="edit-admin">
+                    <label for="edit-admin" style="margin: 0; color: #fff;">Super Admin</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="edit-store">
+                    <label for="edit-store" style="margin: 0; color: #fff;">Store Enabled</label>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveDealer()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        // Check if user is admin
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        if (!userData.isAdmin) {
+            document.body.innerHTML = '<div style="text-align:center;padding:4rem;color:#888;"><h2>Access Denied</h2><p>Super admin privileges required.</p><a href="admin.html" style="color:#4a90d9;">Go to Dashboard</a></div>';
+        }
+
+        let allDealers = [];
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers }
+            });
+            return res.json();
+        }
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatMoney(v) {
+            return '$' + parseFloat(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function planBadge(plan) {
+            const map = { free: 'badge-free', pro: 'badge-pro', business: 'badge-business', shop: 'badge-shop' };
+            return `<span class="badge ${map[plan] || 'badge-free'}">${(plan || 'free').toUpperCase()}</span>`;
+        }
+
+        function statusBadge(status) {
+            const map = { active: 'badge-active', trial: 'badge-trial', expired: 'badge-expired', cancelled: 'badge-expired', past_due: 'badge-expired' };
+            const labels = { active: 'Active', trial: 'Trial', expired: 'Expired', cancelled: 'Cancelled', past_due: 'Past Due' };
+            return `<span class="badge ${map[status] || 'badge-free'}">${labels[status] || status || 'Unknown'}</span>`;
+        }
+
+        async function loadDashboard() {
+            const data = await apiFetch('/api/super-admin');
+            if (!data.success) {
+                if (data.error === 'Super admin access required') {
+                    document.body.innerHTML = '<div style="text-align:center;padding:4rem;color:#888;"><h2>Access Denied</h2><p>Super admin privileges required.</p><a href="admin.html" style="color:#4a90d9;">Go to Dashboard</a></div>';
+                }
+                return;
+            }
+
+            const s = data.stats;
+            document.getElementById('s-dealers').textContent = s.total_dealers;
+            document.getElementById('s-active').textContent = s.active_subscriptions;
+            document.getElementById('s-trial').textContent = s.trial_users;
+            document.getElementById('s-cards').textContent = parseInt(s.total_cards).toLocaleString();
+            document.getElementById('s-stores').textContent = s.active_stores;
+            document.getElementById('s-available').textContent = parseInt(s.available_cards).toLocaleString();
+            document.getElementById('s-orders').textContent = s.total_orders;
+            document.getElementById('s-revenue').textContent = formatMoney(s.total_revenue);
+            document.getElementById('s-integrations').textContent = parseInt(s.ebay_connections) + parseInt(s.sheet_connections);
+
+            allDealers = data.dealers;
+            renderDealers(allDealers);
+        }
+
+        function renderDealers(dealers) {
+            const tbody = document.getElementById('dealers-table');
+            if (dealers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty">No dealers found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = dealers.map(d => `
+                <tr>
+                    <td>
+                        <strong>${esc(d.display_name || d.email)}</strong>
+                        ${d.is_admin ? ' <span class="badge badge-admin">ADMIN</span>' : ''}
+                        <br><span style="font-size:11px;color:#888;">${esc(d.email)}</span>
+                    </td>
+                    <td>${planBadge(d.plan)}</td>
+                    <td>${statusBadge(d.subscription_status)}</td>
+                    <td>${parseInt(d.card_count).toLocaleString()} <span style="color:#666;">/ ${parseInt(d.plan_card_limit || 250).toLocaleString()}</span></td>
+                    <td style="color:#4caf50;">${formatMoney(d.inventory_value)}</td>
+                    <td>${d.shop_enabled ? '<span class="badge badge-store">' + esc(d.subdomain) + '</span>' : '<span style="color:#666;">—</span>'}</td>
+                    <td>
+                        <div class="integrations-icons">
+                            ${parseInt(d.has_ebay) ? '<div class="int-icon int-ebay" title="eBay connected">eB</div>' : ''}
+                            ${parseInt(d.has_sheets) ? '<div class="int-icon int-sheets" title="Sheets connected">G</div>' : ''}
+                            ${d.shop_enabled ? '<div class="int-icon int-store" title="Store live">S</div>' : ''}
+                        </div>
+                    </td>
+                    <td style="font-size:12px;color:#888;">${formatDate(d.created_at)}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="btn btn-sm btn-primary" onclick='editDealer(${JSON.stringify(d).replace(/'/g, "&#39;")})'>Edit</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterDealers() {
+            const q = document.getElementById('search').value.toLowerCase();
+            if (!q) return renderDealers(allDealers);
+            renderDealers(allDealers.filter(d =>
+                (d.email || '').toLowerCase().includes(q) ||
+                (d.display_name || '').toLowerCase().includes(q) ||
+                (d.subdomain || '').toLowerCase().includes(q)
+            ));
+        }
+
+        function editDealer(d) {
+            document.getElementById('edit-id').value = d.id;
+            document.getElementById('modal-title').textContent = 'Edit: ' + (d.display_name || d.email);
+            document.getElementById('edit-plan').value = d.plan || 'free';
+            document.getElementById('edit-limit').value = d.plan_card_limit || 250;
+            document.getElementById('edit-status').value = d.subscription_status || 'trial';
+            document.getElementById('edit-admin').checked = d.is_admin;
+            document.getElementById('edit-store').checked = d.shop_enabled;
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        async function saveDealer() {
+            const userId = parseInt(document.getElementById('edit-id').value);
+            const body = {
+                user_id: userId,
+                plan: document.getElementById('edit-plan').value,
+                plan_card_limit: parseInt(document.getElementById('edit-limit').value),
+                subscription_status: document.getElementById('edit-status').value,
+                is_admin: document.getElementById('edit-admin').checked,
+                shop_enabled: document.getElementById('edit-store').checked,
+            };
+
+            const data = await apiFetch('/api/super-admin', {
+                method: 'PUT',
+                body: JSON.stringify(body)
+            });
+
+            if (data.success) {
+                closeModal();
+                loadDashboard();
+            } else {
+                alert(data.error || 'Failed to update dealer');
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
