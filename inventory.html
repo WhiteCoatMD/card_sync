@@ -133,6 +133,7 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width:40px;"></th>
                     <th>Card</th>
                     <th>Category</th>
                     <th>Set</th>
@@ -344,13 +345,14 @@
             const tbody = document.getElementById('inventory-body');
 
             if (!data.success || data.inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="empty">No cards found. Click "+ Add Card" to get started.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" class="empty">No cards found. Click "+ Add Card" to get started.</td></tr>';
                 document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
             tbody.innerHTML = data.inventory.map(item => `
                 <tr>
+                    <td style="width:40px;padding:4px 8px;">${item.image_url ? '<img src="' + esc(item.image_url) + '" style="width:36px;height:50px;object-fit:contain;border-radius:3px;vertical-align:middle;">' : '<span style="font-size:20px;color:#333;">&#127183;</span>'}</td>
                     <td><strong>${esc(item.name)}</strong>${item.card_number ? ' <span style="color:#666">#' + esc(item.card_number) + '</span>' : ''}</td>
                     <td>${esc(item.category)}</td>
                     <td>${esc(item.set_name || '—')}</td>
@@ -618,6 +620,8 @@
             const params = new URLSearchParams({ name });
             if (category) params.set('category', category);
             if (setName) params.set('set_name', setName);
+            const editId = document.getElementById('edit-id').value;
+            if (editId) params.set('item_id', editId);
 
             const data = await apiFetch('/api/pricing/search?' + params);
 

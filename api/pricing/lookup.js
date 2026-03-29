@@ -24,14 +24,14 @@ module.exports = requireAuth(async function handler(req, res) {
         let items;
         if (all) {
             const result = await retryQuery(
-                () => pool.query('SELECT id, name, category, set_name, card_number, sell_price FROM inventory WHERE status != $1 ORDER BY id LIMIT 100', ['unlisted']),
+                () => pool.query('SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE status != $1 ORDER BY id LIMIT 100', ['unlisted']),
                 'Pricing - Get All'
             );
             items = result.rows;
         } else if (item_ids && Array.isArray(item_ids) && item_ids.length > 0) {
             const placeholders = item_ids.map((_, i) => `$${i + 1}`).join(',');
             const result = await retryQuery(
-                () => pool.query(`SELECT id, name, category, set_name, card_number, sell_price FROM inventory WHERE id IN (${placeholders})`, item_ids),
+                () => pool.query(`SELECT id, name, category, set_name, card_number, sell_price, image_url FROM inventory WHERE id IN (${placeholders})`, item_ids),
                 'Pricing - Get Items'
             );
             items = result.rows;
@@ -49,6 +49,27 @@ module.exports = requireAuth(async function handler(req, res) {
                 category: item.category,
                 current_sell_price: item.sell_price ? parseFloat(item.sell_price) : null,
             });
+
+            // Save market price and image to inventory
+            if (priceData.found && priceData.market_price !== null) {
+                const updateFields = ['market_price = $1', 'market_price_updated_at = NOW()'];
+                const updateParams = [priceData.market_price];
+                let idx = 2;
+
+                // Also save image if card doesn't have one
+                if (priceData.image_url && !item.image_url) {
+                    updateFields.push(`image_url = $${idx++}`);
+                    updateParams.push(priceData.image_url);
+                }
+
+                updateParams.push(priceData.item_id);
+                try {
+                    await pool.query(
+                        `UPDATE inventory SET ${updateFields.join(', ')} WHERE id = $${idx}`,
+                        updateParams
+                    );
+                } catch (e) { /* don't fail the lookup */ }
+            }
         }
 
         return res.status(200).json({
