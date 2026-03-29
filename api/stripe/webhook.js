@@ -103,6 +103,12 @@ module.exports = async function handler(req, res) {
                 }
 
                 await client.query('COMMIT');
+
+                // Check low stock alerts
+                const { checkAndAlertLowStock } = require('../../lib/stock-alerts');
+                for (const item of items.rows) {
+                    checkAndAlertLowStock(parseInt(dealerId), item.inventory_id).catch(() => {});
+                }
                 console.log('Webhook: Order', orderId, 'completed successfully');
             } catch (err) {
                 await client.query('ROLLBACK');

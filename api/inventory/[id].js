@@ -73,6 +73,12 @@ module.exports = requireAuth(async function handler(req, res) {
                 return res.status(404).json({ success: false, error: 'Item not found' });
             }
 
+            // Check low stock alert if quantity was updated
+            if (req.body.quantity !== undefined) {
+                const { checkAndAlertLowStock } = require('../../lib/stock-alerts');
+                checkAndAlertLowStock(req.user.id, parseInt(id)).catch(() => {});
+            }
+
             return res.status(200).json({ success: true, item: result.rows[0] });
         } catch (error) {
             console.error('Inventory update error:', error);

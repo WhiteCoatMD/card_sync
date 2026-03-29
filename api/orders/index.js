@@ -132,6 +132,16 @@ module.exports = requireAuth(async function handler(req, res) {
 
             await client.query('COMMIT');
 
+            // Check low stock alerts for sold items
+            if (type === 'sell') {
+                const { checkAndAlertLowStock } = require('../../lib/stock-alerts');
+                for (const item of items) {
+                    if (item.inventory_id) {
+                        checkAndAlertLowStock(req.user.id, item.inventory_id).catch(() => {});
+                    }
+                }
+            }
+
             return res.status(201).json({
                 success: true,
                 order: { ...order, items: orderItems }
