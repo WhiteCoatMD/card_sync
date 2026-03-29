@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Sell Your Cards</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-green { background: #4caf50; border-color: #4caf50; }
+        .btn-green:hover { background: #43a047; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #888; font-size: 14px; margin-bottom: 2rem; line-height: 1.6; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid #2a2a3e; }
+        .tab { padding: 12px 24px; font-size: 14px; font-weight: 600; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+        .tab:hover { color: #ccc; }
+        .tab.active { color: #4a90d9; border-bottom-color: #4a90d9; }
+
+        /* Form */
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4a90d9; }
+
+        .card-entry { background: #12122a; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px; margin-bottom: 10px; position: relative; }
+        .card-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-entry-header span { font-size: 13px; font-weight: 600; color: #4a90d9; }
+        .remove-card { background: none; border: none; color: #666; cursor: pointer; font-size: 18px; padding: 0 4px; }
+        .remove-card:hover { color: #f44336; }
+
+        .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+        /* Success */
+        .success-box { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; padding: 24px; text-align: center; display: none; }
+        .success-box h3 { color: #4caf50; margin-bottom: 8px; }
+        .success-box p { color: #aaa; font-size: 14px; margin-bottom: 12px; }
+        .token-box { background: #0d0d1a; border: 1px solid #333; border-radius: 6px; padding: 10px 14px; font-family: monospace; font-size: 13px; color: #4a90d9; word-break: break-all; margin: 12px 0; }
+
+        /* Check offers */
+        .check-section { margin-bottom: 2rem; }
+        .check-form { display: flex; gap: 10px; }
+        .check-form input { flex: 1; }
+
+        /* Offers view */
+        .offer-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; margin-bottom: 12px; }
+        .offer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .offer-dealer { font-weight: 600; }
+        .offer-amount { font-size: 1.3rem; font-weight: 700; color: #4caf50; }
+        .offer-notes { color: #888; font-size: 13px; margin: 8px 0; }
+        .offer-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-pending { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .badge-accepted { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .badge-rejected { background: rgba(244,67,54,0.15); color: #f44336; }
+
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .items-table th, .items-table td { padding: 8px 10px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        .items-table th { color: #888; font-size: 11px; text-transform: uppercase; }
+
+        .empty { text-align: center; padding: 2rem; color: #666; }
+
+        .hidden { display: none; }
+
+        /* Mode selector */
+        .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2rem; }
+        .mode-card { background: #1a1a2e; border: 2px solid #2a2a3e; border-radius: 10px; padding: 24px; cursor: pointer; text-align: center; transition: border-color 0.2s; }
+        .mode-card:hover { border-color: #4a4a5e; }
+        .mode-card.selected { border-color: #4a90d9; }
+        .mode-card h4 { margin-bottom: 6px; font-size: 15px; }
+        .mode-card p { color: #888; font-size: 13px; line-height: 1.5; }
+        .mode-icon { font-size: 28px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync</h1>
+        <div class="nav">
+            <a href="/" class="btn">Home</a>
+            <a href="marketplace.html" class="btn">Marketplace</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Sell Your Cards</h1>
+        <p class="page-subtitle">Submit your cards to a specific dealer or post them to the open marketplace where multiple dealers can make offers.</p>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('submit')">Submit Cards</div>
+            <div class="tab" onclick="switchTab('check')">Check Offers</div>
+        </div>
+
+        <!-- SUBMIT TAB -->
+        <div id="tab-submit">
+            <!-- Mode selector -->
+            <div class="mode-cards">
+                <div class="mode-card selected" id="mode-marketplace" onclick="selectMode('marketplace')">
+                    <div class="mode-icon">&#127981;</div>
+                    <h4>Open Marketplace</h4>
+                    <p>Post your cards publicly. Any dealer can make an offer. You pick the best one.</p>
+                </div>
+                <div class="mode-card" id="mode-direct" onclick="selectMode('direct')">
+                    <div class="mode-icon">&#128100;</div>
+                    <h4>Direct to Dealer</h4>
+                    <p>Submit directly to a specific dealer you already know.</p>
+                </div>
+            </div>
+
+            <!-- Direct dealer selector -->
+            <div class="section hidden" id="dealer-select">
+                <h3>Select Dealer</h3>
+                <div class="form-group">
+                    <label>Dealer ID</label>
+                    <input type="number" id="dealer-id" placeholder="Enter dealer ID">
+                </div>
+            </div>
+
+            <!-- Your info -->
+            <div class="section">
+                <h3>Your Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Your Name *</label>
+                        <input type="text" id="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="customer-email">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone (optional)</label>
+                        <input type="text" id="customer-phone">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards -->
+            <div class="section">
+                <h3>Your Cards</h3>
+                <div id="cards-list"></div>
+                <button class="btn" onclick="addCard()" style="margin-top: 10px;">+ Add Card</button>
+            </div>
+
+            <!-- Notes -->
+            <div class="section">
+                <h3>Notes (optional)</h3>
+                <div class="form-group">
+                    <textarea id="notes" rows="3" placeholder="Any additional details..."></textarea>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-green" onclick="submitCards()" id="submit-btn">Submit Cards</button>
+            </div>
+
+            <!-- Success message -->
+            <div class="success-box" id="success-box">
+                <h3>Cards Submitted!</h3>
+                <p id="success-msg"></p>
+                <p><strong>Save this token to check back on your offers:</strong></p>
+                <div class="token-box" id="seller-token-display"></div>
+                <button class="btn btn-sm" onclick="copyToken()">Copy Token</button>
+                <p style="margin-top: 12px;"><button class="btn btn-primary" onclick="switchTab('check'); document.getElementById('check-token').value = document.getElementById('seller-token-display').textContent; checkOffers();">Check Offers Now</button></p>
+            </div>
+        </div>
+
+        <!-- CHECK OFFERS TAB -->
+        <div id="tab-check" class="hidden">
+            <div class="check-section">
+                <p style="color:#aaa; font-size:14px; margin-bottom: 12px;">Enter the token you received when you submitted your cards to check on offers from dealers.</p>
+                <div class="check-form">
+                    <input type="text" id="check-token" placeholder="Paste your seller token here...">
+                    <button class="btn btn-primary" onclick="checkOffers()">Check</button>
+                </div>
+            </div>
+
+            <div id="offers-results"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMode = 'marketplace';
+        let cardCount = 0;
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-submit').classList.add('hidden');
+            document.getElementById('tab-check').classList.add('hidden');
+            if (tab === 'submit') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('tab-submit').classList.remove('hidden');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('tab-check').classList.remove('hidden');
+            }
+        }
+
+        function selectMode(mode) {
+            selectedMode = mode;
+            document.getElementById('mode-marketplace').classList.toggle('selected', mode === 'marketplace');
+            document.getElementById('mode-direct').classList.toggle('selected', mode === 'direct');
+            document.getElementById('dealer-select').classList.toggle('hidden', mode !== 'direct');
+        }
+
+        function addCard() {
+            cardCount++;
+            const div = document.createElement('div');
+            div.className = 'card-entry';
+            div.id = 'card-' + cardCount;
+            div.innerHTML = `
+                <div class="card-entry-header">
+                    <span>Card #${cardCount}</span>
+                    <button class="remove-card" onclick="this.closest('.card-entry').remove()">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;"><label>Card Name *</label><input type="text" class="card-name"></div>
+                    <div class="form-group"><label>Category</label>
+                        <select class="card-category">
+                            <option value="">Select...</option>
+                            <option value="pokemon">Pokemon</option>
+                            <option value="magic">Magic: The Gathering</option>
+                            <option value="yugioh">Yu-Gi-Oh!</option>
+                            <option value="sports">Sports</option>
+                            <option value="one_piece">One Piece</option>
+                            <option value="lorcana">Lorcana</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Set</label><input type="text" class="card-set"></div>
+                    <div class="form-group" style="flex:0.5;"><label>Number</label><input type="text" class="card-number"></div>
+                    <div class="form-group"><label>Condition</label>
+                        <select class="card-condition">
+                            <option value="near_mint">Near Mint</option>
+                            <option value="lightly_played">Lightly Played</option>
+                            <option value="moderately_played">Moderately Played</option>
+                            <option value="heavily_played">Heavily Played</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.5;"><label>Qty</label><input type="number" class="card-qty" value="1" min="1"></div>
+                    <div class="form-group"><label>Asking Price ($)</label><input type="number" class="card-price" step="0.01" placeholder="0.00"></div>
+                </div>
+            `;
+            document.getElementById('cards-list').appendChild(div);
+        }
+
+        async function submitCards() {
+            const name = document.getElementById('customer-name').value.trim();
+            if (!name) return alert('Please enter your name');
+
+            const entries = document.querySelectorAll('.card-entry');
+            if (entries.length === 0) return alert('Add at least one card');
+
+            const items = [];
+            entries.forEach(entry => {
+                const cardName = entry.querySelector('.card-name').value.trim();
+                if (!cardName) return;
+                items.push({
+                    card_name: cardName,
+                    category: entry.querySelector('.card-category').value || null,
+                    set_name: entry.querySelector('.card-set').value.trim() || null,
+                    card_number: entry.querySelector('.card-number').value.trim() || null,
+                    condition: entry.querySelector('.card-condition').value,
+                    quantity: parseInt(entry.querySelector('.card-qty').value) || 1,
+                    asking_price: parseFloat(entry.querySelector('.card-price').value) || null,
+                });
+            });
+
+            if (items.length === 0) return alert('Add at least one card with a name');
+
+            const body = {
+                type: selectedMode,
+                customer_name: name,
+                customer_email: document.getElementById('customer-email').value.trim() || null,
+                customer_phone: document.getElementById('customer-phone').value.trim() || null,
+                notes: document.getElementById('notes').value.trim() || null,
+                items,
+            };
+
+            if (selectedMode === 'direct') {
+                const dealerId = parseInt(document.getElementById('dealer-id').value);
+                if (!dealerId) return alert('Please enter a dealer ID');
+                body.dealer_id = dealerId;
+            }
+
+            const btn = document.getElementById('submit-btn');
+            btn.textContent = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/buylist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    document.getElementById('success-msg').textContent = data.message;
+                    document.getElementById('seller-token-display').textContent = data.seller_token;
+                    document.getElementById('success-box').style.display = 'block';
+
+                    // Save token locally
+                    const tokens = JSON.parse(localStorage.getItem('seller_tokens') || '[]');
+                    tokens.push({ token: data.seller_token, buylist_id: data.buylist_id, date: new Date().toISOString() });
+                    localStorage.setItem('seller_tokens', JSON.stringify(tokens));
+                } else {
+                    alert(data.error || 'Failed to submit');
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+
+            btn.textContent = 'Submit Cards';
+            btn.disabled = false;
+        }
+
+        function copyToken() {
+            const token = document.getElementById('seller-token-display').textContent;
+            navigator.clipboard.writeText(token);
+            event.target.textContent = 'Copied!';
+            setTimeout(() => event.target.textContent = 'Copy Token', 2000);
+        }
+
+        const conditionLabels = { mint: 'Mint', near_mint: 'Near Mint', lightly_played: 'Lightly Played', moderately_played: 'Mod. Played', heavily_played: 'Heavily Played', damaged: 'Damaged' };
+
+        async function checkOffers() {
+            const token = document.getElementById('check-token').value.trim();
+            if (!token) return alert('Please enter your seller token');
+
+            const results = document.getElementById('offers-results');
+            results.innerHTML = '<div class="empty">Loading...</div>';
+
+            try {
+                const resp = await fetch('/api/buylist/marketplace?seller_token=' + encodeURIComponent(token));
+                const data = await resp.json();
+
+                if (!data.success) {
+                    results.innerHTML = '<div class="empty">Submission not found. Check your token.</div>';
+                    return;
+                }
+
+                const sub = data.submission;
+                const statusBadge = { pending: 'badge-pending', accepted: 'badge-accepted', rejected: 'badge-rejected' };
+
+                let html = `
+                    <div class="section">
+                        <h3>Your Submission <span class="badge ${statusBadge[sub.status] || 'badge-pending'}">${sub.status}</span></h3>
+                        <p style="color:#aaa;font-size:13px;margin-bottom:12px;">Submitted ${new Date(sub.created_at).toLocaleDateString()}</p>
+                        <table class="items-table">
+                            <thead><tr><th>Card</th><th>Category</th><th>Condition</th><th>Qty</th><th>Asking</th></tr></thead>
+                            <tbody>
+                                ${sub.items.map(i => `<tr>
+                                    <td><strong>${esc(i.card_name)}</strong>${i.set_name ? '<br><span style="color:#888;font-size:11px;">' + esc(i.set_name) + '</span>' : ''}</td>
+                                    <td>${esc(i.category || '')}</td>
+                                    <td>${conditionLabels[i.condition] || i.condition}</td>
+                                    <td>${i.quantity}</td>
+                                    <td>${i.asking_price ? '$' + parseFloat(i.asking_price).toFixed(2) : '—'}</td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                if (data.offers.length === 0) {
+                    html += '<div class="empty">No offers yet. Check back soon!</div>';
+                } else {
+                    html += '<h3 style="margin-bottom:12px;">Dealer Offers (' + data.offers.length + ')</h3>';
+                    data.offers.forEach(offer => {
+                        const canAct = offer.status === 'pending' && sub.status === 'pending';
+                        html += `
+                            <div class="offer-card">
+                                <div class="offer-header">
+                                    <span class="offer-dealer">${esc(offer.dealer_name || 'Dealer')}</span>
+                                    <span class="offer-amount">$${parseFloat(offer.total_offer).toFixed(2)}</span>
+                                </div>
+                                ${offer.notes ? '<div class="offer-notes">' + esc(offer.notes) + '</div>' : ''}
+                                <div style="font-size:12px;color:#666;">Offered ${new Date(offer.created_at).toLocaleDateString()}</div>
+                                <span class="badge ${statusBadge[offer.status] || 'badge-pending'}" style="margin-top:8px;">${offer.status}</span>
+                                ${canAct ? `
+                                    <div class="offer-actions">
+                                        <button class="btn btn-green btn-sm" onclick="offerAction('${token}', ${offer.id}, 'accept')">Accept Offer</button>
+                                        <button class="btn btn-danger btn-sm" onclick="offerAction('${token}', ${offer.id}, 'reject')">Reject</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                }
+
+                results.innerHTML = html;
+            } catch (err) {
+                results.innerHTML = '<div class="empty">Error loading offers.</div>';
+            }
+        }
+
+        async function offerAction(sellerToken, offerId, action) {
+            if (action === 'accept' && !confirm('Accept this offer? All other pending offers will be rejected.')) return;
+
+            try {
+                const resp = await fetch('/api/buylist/offers', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ seller_token: sellerToken, offer_id: offerId, action }),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    alert(data.message);
+                    checkOffers();
+                } else {
+                    alert(data.error || 'Failed');
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        // Init with one card
+        addCard();
+
+        // Check URL params
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('dealer')) {
+            selectMode('direct');
+            document.getElementById('dealer-id').value = params.get('dealer');
+        }
+        if (params.get('token')) {
+            switchTab('check');
+            document.getElementById('check-token').value = params.get('token');
+            checkOffers();
+        }
+    </script>
+</body>
+</html>

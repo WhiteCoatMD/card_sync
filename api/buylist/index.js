@@ -19,22 +19,32 @@ module.exports = async function handler(req, res) {
     // POST is public (customers submitting)
     if (req.method === 'POST') {
         try {
-            const { dealer_id, customer_name, customer_email, customer_phone, notes, items } = req.body;
+            const { dealer_id, customer_name, customer_email, customer_phone, notes, items, type } = req.body;
 
-            if (!dealer_id) return res.status(400).json({ success: false, error: 'dealer_id is required' });
+            const submissionType = type === 'marketplace' ? 'marketplace' : 'direct';
+
+            if (submissionType === 'direct' && !dealer_id) {
+                return res.status(400).json({ success: false, error: 'dealer_id is required for direct submissions' });
+            }
             if (!customer_name) return res.status(400).json({ success: false, error: 'Your name is required' });
             if (!items || !Array.isArray(items) || items.length === 0) {
                 return res.status(400).json({ success: false, error: 'At least one card is required' });
             }
+
+            // Generate a seller token so they can check back on their submission
+            const crypto = require('crypto');
+            const sellerToken = crypto.randomBytes(32).toString('hex');
 
             const client = await pool.connect();
             try {
                 await client.query('BEGIN');
 
                 const buylistResult = await client.query(
-                    `INSERT INTO buylist (dealer_id, customer_name, customer_email, customer_phone, notes)
-                     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-                    [dealer_id, customer_name, customer_email || null, customer_phone || null, notes || null]
+                    `INSERT INTO buylist (dealer_id, customer_name, customer_email, customer_phone, notes, type, seller_token)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                    [submissionType === 'direct' ? dealer_id : null, customer_name,
+                     customer_email || null, customer_phone || null, notes || null,
+                     submissionType, sellerToken]
                 );
                 const buylist = buylistResult.rows[0];
 
@@ -51,10 +61,15 @@ module.exports = async function handler(req, res) {
 
                 await client.query('COMMIT');
 
+                const message = submissionType === 'marketplace'
+                    ? 'Your cards have been posted to the marketplace! Dealers will start making offers.'
+                    : 'Your cards have been submitted! The dealer will review and get back to you.';
+
                 return res.status(201).json({
                     success: true,
-                    message: 'Your cards have been submitted! The dealer will review and get back to you.',
+                    message,
                     buylist_id: buylist.id,
+                    seller_token: sellerToken,
                 });
             } catch (err) {
                 await client.query('ROLLBACK');
