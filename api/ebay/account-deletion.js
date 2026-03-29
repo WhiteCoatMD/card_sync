@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     }
 
     const verificationToken = process.env.EBAY_VERIFICATION_TOKEN;
-    const endpoint = 'https://cardsync-lemon.vercel.app/api/ebay/account-deletion';
+    const endpoint = 'https://collect-sync.com/api/ebay/account-deletion';
 
     const hash = crypto.createHash('sha256');
     hash.update(challengeCode);
