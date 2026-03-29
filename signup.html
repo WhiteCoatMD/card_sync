@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Sign Up</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .signup-card { background: #1a1a2e; border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        h1 { color: #fff; text-align: center; margin-bottom: 8px; font-size: 28px; }
+        .subtitle { color: #888; text-align: center; margin-bottom: 30px; font-size: 14px; }
+        label { color: #aaa; font-size: 13px; display: block; margin-bottom: 6px; }
+        input { width: 100%; padding: 12px; border: 1px solid #333; border-radius: 8px; background: #0d0d1a; color: #fff; font-size: 15px; margin-bottom: 16px; }
+        input:focus { outline: none; border-color: #4a90d9; }
+        button { width: 100%; padding: 14px; background: #4a90d9; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #3a7bc8; }
+        .error { color: #f44336; text-align: center; margin-bottom: 16px; font-size: 14px; display: none; }
+        .login-link { text-align: center; margin-top: 20px; color: #888; font-size: 13px; }
+        .login-link a { color: #4a90d9; text-decoration: none; }
+        .terms { text-align: center; margin-top: 16px; font-size: 11px; color: #555; line-height: 1.5; }
+        .terms a { color: #4a90d9; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="signup-card">
+        <h1>Collect Sync</h1>
+        <p class="subtitle">Create your free dealer account</p>
+        <div class="error" id="error"></div>
+        <form onsubmit="signup(event)">
+            <label>Shop / Display Name</label>
+            <input type="text" id="displayName" placeholder="e.g. Card King HQ" required>
+            <label>Email</label>
+            <input type="email" id="email" required>
+            <label>Password</label>
+            <input type="password" id="password" minlength="8" required>
+            <button type="submit">Create Account</button>
+        </form>
+        <p class="terms">Free plan includes 250 cards. No credit card required.<br>By signing up you agree to our <a href="privacy.html">Privacy Policy</a>.</p>
+        <p class="login-link">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+    <script>
+        if (localStorage.getItem('auth_token')) window.location.href = 'admin.html';
+
+        async function signup(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('error');
+            errorEl.style.display = 'none';
+
+            const password = document.getElementById('password').value;
+            if (password.length < 8) {
+                errorEl.textContent = 'Password must be at least 8 characters';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const btn = e.target.querySelector('button');
+            btn.textContent = 'Creating account...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: password,
+                        displayName: document.getElementById('displayName').value
+                    })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    window.location.href = 'admin.html';
+                } else {
+                    errorEl.textContent = data.error || 'Signup failed';
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.textContent = 'Connection error';
+                errorEl.style.display = 'block';
+            }
+
+            btn.textContent = 'Create Account';
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
