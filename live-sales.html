@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Live Sales Import</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-green { background: #4caf50; border-color: #4caf50; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #888; font-size: 14px; margin-bottom: 2rem; line-height: 1.6; }
+
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; color: #aaa; font-size: 12px; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4a90d9; }
+
+        .platform-pills { display: flex; gap: 8px; margin-bottom: 20px; }
+        .pill { padding: 8px 18px; border-radius: 20px; border: 1px solid #333; background: #0d0d1a; color: #aaa; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .pill:hover { border-color: #555; }
+        .pill.active { border-color: #4a90d9; color: #fff; background: rgba(74,144,217,0.15); }
+
+        .sale-block { background: #12122a; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; margin-bottom: 12px; }
+        .sale-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .sale-block-header h4 { font-size: 14px; color: #4a90d9; }
+        .remove-sale { background: none; border: none; color: #666; cursor: pointer; font-size: 18px; }
+        .remove-sale:hover { color: #f44336; }
+
+        .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .item-row input { padding: 8px; border: 1px solid #333; border-radius: 4px; background: #0d0d1a; color: #fff; font-size: 13px; }
+        .item-row .item-name { flex: 3; }
+        .item-row .item-price { flex: 1; }
+        .item-row .item-qty { flex: 0.5; width: 50px; }
+        .item-row .remove-item { background: none; border: none; color: #555; cursor: pointer; font-size: 16px; flex: 0 0 20px; }
+        .item-row .remove-item:hover { color: #f44336; }
+
+        .sale-total { text-align: right; font-size: 14px; font-weight: 700; color: #4caf50; margin-top: 8px; }
+
+        .actions { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 20px; }
+
+        .success-banner { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .success-banner h3 { color: #4caf50; margin-bottom: 6px; }
+        .success-banner p { color: #888; font-size: 14px; }
+
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        .history-table th { color: #888; font-size: 11px; text-transform: uppercase; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-completed { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .empty { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync — Live Sales</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a href="shipping.html" class="btn">Shipping</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Live Sales Import</h1>
+        <p class="page-subtitle">Quickly log sales from Whatnot, Facebook Live, Instagram Live, or card shows. Each buyer becomes an order with inventory auto-updated.</p>
+
+        <div id="success-area"></div>
+
+        <div class="section">
+            <h3>Platform</h3>
+            <div class="platform-pills">
+                <div class="pill active" onclick="setPlatform(this, 'Whatnot')">Whatnot</div>
+                <div class="pill" onclick="setPlatform(this, 'Facebook Live')">Facebook Live</div>
+                <div class="pill" onclick="setPlatform(this, 'Instagram Live')">Instagram Live</div>
+                <div class="pill" onclick="setPlatform(this, 'Card Show')">Card Show</div>
+                <div class="pill" onclick="setPlatform(this, 'Other')">Other</div>
+            </div>
+        </div>
+
+        <div id="sales-list"></div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="addSale()">+ Add Buyer</button>
+            <div style="display:flex;gap:10px;">
+                <span id="grand-total" style="font-size:16px;font-weight:700;color:#4caf50;line-height:36px;">Total: $0.00</span>
+                <button class="btn btn-green" onclick="submitAll()" id="submit-btn" style="padding:10px 24px;font-size:15px;">Import All Sales</button>
+            </div>
+        </div>
+
+        <div class="section" style="margin-top:2rem;">
+            <h3>Recent Live Sales</h3>
+            <table class="history-table">
+                <thead><tr><th>Date</th><th>Platform</th><th>Buyer</th><th>Items</th><th>Total</th><th>Tracking</th></tr></thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        let platform = 'Whatnot';
+        let saleCount = 0;
+        let inventoryCache = [];
+
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+
+        function setPlatform(el, name) {
+            platform = name;
+            document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Load inventory for autocomplete
+        async function loadInventory() {
+            const data = await apiFetch('/api/inventory?limit=100&status=available');
+            if (data.success) inventoryCache = data.inventory;
+        }
+        loadInventory();
+
+        function addSale() {
+            saleCount++;
+            const div = document.createElement('div');
+            div.className = 'sale-block';
+            div.id = 'sale-' + saleCount;
+            div.dataset.saleId = saleCount;
+            div.innerHTML = `
+                <div class="sale-block-header">
+                    <h4>Buyer #${saleCount}</h4>
+                    <button class="remove-sale" onclick="this.closest('.sale-block').remove();updateGrandTotal()">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;"><label>Buyer Name *</label><input type="text" class="buyer-name" placeholder="Username or name"></div>
+                    <div class="form-group"><label>Email (optional)</label><input type="email" class="buyer-email" placeholder="For shipping notification"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Shipping Address (optional)</label><input type="text" class="buyer-address" placeholder="Full address for label"></div>
+                </div>
+                <div class="items-container" data-sale="${saleCount}">
+                    <div class="item-row">
+                        <input type="text" class="item-name" placeholder="Card name" list="inv-list">
+                        <input type="number" class="item-price" step="0.01" placeholder="Price" oninput="updateSaleTotal(${saleCount})">
+                        <input type="number" class="item-qty" value="1" min="1" oninput="updateSaleTotal(${saleCount})">
+                        <button class="remove-item" onclick="this.closest('.item-row').remove();updateSaleTotal(${saleCount})">&times;</button>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                    <button class="btn btn-sm" onclick="addItem(${saleCount})">+ Add Item</button>
+                    <div class="sale-total" id="sale-total-${saleCount}">$0.00</div>
+                </div>
+            `;
+            document.getElementById('sales-list').appendChild(div);
+
+            // Build datalist for autocomplete
+            if (!document.getElementById('inv-list')) {
+                const dl = document.createElement('datalist');
+                dl.id = 'inv-list';
+                inventoryCache.forEach(i => {
+                    const opt = document.createElement('option');
+                    opt.value = i.name;
+                    dl.appendChild(opt);
+                });
+                document.body.appendChild(dl);
+            }
+        }
+
+        function addItem(saleId) {
+            const container = document.querySelector(`.items-container[data-sale="${saleId}"]`);
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <input type="text" class="item-name" placeholder="Card name" list="inv-list">
+                <input type="number" class="item-price" step="0.01" placeholder="Price" oninput="updateSaleTotal(${saleId})">
+                <input type="number" class="item-qty" value="1" min="1" oninput="updateSaleTotal(${saleId})">
+                <button class="remove-item" onclick="this.closest('.item-row').remove();updateSaleTotal(${saleId})">&times;</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function updateSaleTotal(saleId) {
+            const container = document.querySelector(`.items-container[data-sale="${saleId}"]`);
+            let total = 0;
+            container.querySelectorAll('.item-row').forEach(row => {
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const qty = parseInt(row.querySelector('.item-qty').value) || 1;
+                total += price * qty;
+            });
+            document.getElementById('sale-total-' + saleId).textContent = '$' + total.toFixed(2);
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            let total = 0;
+            document.querySelectorAll('.sale-total').forEach(el => {
+                total += parseFloat(el.textContent.replace('$', '')) || 0;
+            });
+            document.getElementById('grand-total').textContent = 'Total: $' + total.toFixed(2);
+        }
+
+        async function submitAll() {
+            const blocks = document.querySelectorAll('.sale-block');
+            if (blocks.length === 0) return alert('Add at least one buyer');
+
+            const sales = [];
+            for (const block of blocks) {
+                const buyerName = block.querySelector('.buyer-name').value.trim();
+                if (!buyerName) { alert('All buyers need a name'); return; }
+
+                const items = [];
+                block.querySelectorAll('.item-row').forEach(row => {
+                    const name = row.querySelector('.item-name').value.trim();
+                    if (!name) return;
+                    items.push({
+                        card_name: name,
+                        price: parseFloat(row.querySelector('.item-price').value) || 0,
+                        quantity: parseInt(row.querySelector('.item-qty').value) || 1,
+                    });
+                });
+
+                if (items.length === 0) { alert(`${buyerName} has no items`); return; }
+
+                const sale = {
+                    buyer_name: buyerName,
+                    buyer_email: block.querySelector('.buyer-email').value.trim() || null,
+                    items,
+                };
+
+                const address = block.querySelector('.buyer-address').value.trim();
+                if (address) sale.notes = 'Ship to: ' + address;
+
+                sales.push(sale);
+            }
+
+            const btn = document.getElementById('submit-btn');
+            btn.textContent = 'Importing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/live-sales', {
+                method: 'POST',
+                body: JSON.stringify({ platform, sales }),
+            });
+
+            btn.textContent = 'Import All Sales';
+            btn.disabled = false;
+
+            if (data.success) {
+                document.getElementById('success-area').innerHTML = `
+                    <div class="success-banner">
+                        <h3>${data.message}</h3>
+                        <p>${data.errors ? data.errors.length + ' errors' : 'All sales imported successfully'}</p>
+                        <div style="margin-top:12px;">
+                            <a href="orders.html" class="btn btn-sm">View Orders</a>
+                            <a href="shipping.html" class="btn btn-sm">Ship Orders</a>
+                        </div>
+                    </div>`;
+                document.getElementById('sales-list').innerHTML = '';
+                saleCount = 0;
+                updateGrandTotal();
+                loadHistory();
+                inventoryCache = [];
+                loadInventory();
+            } else {
+                alert(data.error || 'Import failed');
+            }
+        }
+
+        async function loadHistory() {
+            const data = await apiFetch('/api/live-sales');
+            const tbody = document.getElementById('history-body');
+
+            if (!data.success || data.sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">No live sales yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.sales.map(s => {
+                const platformMatch = (s.notes || '').match(/\[Live Sale\] (.+?)(?:\s—|$)/);
+                return `<tr>
+                    <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td>${esc(platformMatch ? platformMatch[1] : 'Live Sale')}</td>
+                    <td>${esc(s.customer_name)}</td>
+                    <td>${s.item_count}</td>
+                    <td style="color:#4caf50;font-weight:600;">$${parseFloat(s.total_amount).toFixed(2)}</td>
+                    <td>${s.shipping_tracking ? '<a href="shipping.html?order=' + s.id + '" style="color:#4a90d9;">' + esc(s.shipping_tracking) + '</a>' : '<a href="shipping.html?order=' + s.id + '" style="color:#888;font-size:12px;">Create label</a>'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Init with one sale block
+        addSale();
+        loadHistory();
+    </script>
+</body>
+</html>
