@@ -86,6 +86,72 @@
         <h1 class="page-title">Integrations</h1>
         <p class="page-subtitle">Connect external tools to keep your inventory in sync automatically.</p>
 
+        <!-- Online Store / Subdomain -->
+        <div class="integration-card" id="shop-card">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(156,39,176,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#9c27b0" stroke-width="2" fill="none"/>
+                        <path d="M2 8h20" stroke="#9c27b0" stroke-width="2"/>
+                        <circle cx="6" cy="6" r="1" fill="#9c27b0"/>
+                        <circle cx="9" cy="6" r="1" fill="#9c27b0"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Online Store <span class="tag tag-not-connected" id="shop-tag">Not Set Up</span></h2>
+                </div>
+            </div>
+
+            <p class="integration-desc">
+                Get your own branded storefront at <strong>yourshop.collect-sync.com</strong>. Customers can browse and buy your cards directly from your personalized store page.
+            </p>
+
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="shop-dot"></div>
+                    <span id="shop-status-text">Not configured</span>
+                </div>
+                <div class="status-actions" id="shop-status-actions"></div>
+            </div>
+
+            <div class="connect-form" id="shop-form">
+                <h3>Store Settings</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subdomain</label>
+                        <div style="display:flex;align-items:center;gap:0;">
+                            <input type="text" id="shop-subdomain" placeholder="yourshop" style="border-radius:6px 0 0 6px;">
+                            <span style="background:#0d0d1a;border:1px solid #333;border-left:0;padding:10px 12px;border-radius:0 6px 6px 0;font-size:14px;color:#666;white-space:nowrap;">.collect-sync.com</span>
+                        </div>
+                        <div class="help">3-63 characters. Letters, numbers, and hyphens only.</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Store Name</label>
+                        <input type="text" id="shop-name" placeholder="My Card Shop">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Store Description</label>
+                        <input type="text" id="shop-description" placeholder="Trading cards, sealed products, and more">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="shop-enabled" style="width:auto;">
+                            Enable store (make it publicly visible)
+                        </label>
+                    </div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn btn-primary" onclick="saveShopSettings()">Save Store Settings</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Google Sheets Integration -->
         <div class="integration-card" id="sheets-card">
             <div class="integration-header">
@@ -250,72 +316,6 @@
                         <h4>Start syncing</h4>
                         <p>Once connected, use the sync buttons to push your inventory to eBay as live listings. Card Sync handles the rest.</p>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Online Store / Subdomain -->
-        <div class="integration-card" id="shop-card">
-            <div class="integration-header">
-                <div class="integration-icon" style="background:rgba(156,39,176,0.15);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#9c27b0" stroke-width="2" fill="none"/>
-                        <path d="M2 8h20" stroke="#9c27b0" stroke-width="2"/>
-                        <circle cx="6" cy="6" r="1" fill="#9c27b0"/>
-                        <circle cx="9" cy="6" r="1" fill="#9c27b0"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2>Online Store <span class="tag tag-not-connected" id="shop-tag">Not Set Up</span></h2>
-                </div>
-            </div>
-
-            <p class="integration-desc">
-                Get your own branded storefront at <strong>yourshop.collect-sync.com</strong>. Customers can browse and buy your cards directly from your personalized store page.
-            </p>
-
-            <div class="status-bar">
-                <div class="status-info">
-                    <div class="status-dot off" id="shop-dot"></div>
-                    <span id="shop-status-text">Not configured</span>
-                </div>
-                <div class="status-actions" id="shop-status-actions"></div>
-            </div>
-
-            <div class="connect-form" id="shop-form">
-                <h3>Store Settings</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Subdomain</label>
-                        <div style="display:flex;align-items:center;gap:0;">
-                            <input type="text" id="shop-subdomain" placeholder="yourshop" style="border-radius:6px 0 0 6px;">
-                            <span style="background:#0d0d1a;border:1px solid #333;border-left:0;padding:10px 12px;border-radius:0 6px 6px 0;font-size:14px;color:#666;white-space:nowrap;">.collect-sync.com</span>
-                        </div>
-                        <div class="help">3-63 characters. Letters, numbers, and hyphens only.</div>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Store Name</label>
-                        <input type="text" id="shop-name" placeholder="My Card Shop">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Store Description</label>
-                        <input type="text" id="shop-description" placeholder="Trading cards, sealed products, and more">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                            <input type="checkbox" id="shop-enabled" style="width:auto;">
-                            Enable store (make it publicly visible)
-                        </label>
-                    </div>
-                </div>
-                <div class="connect-actions">
-                    <button class="btn btn-primary" onclick="saveShopSettings()">Save Store Settings</button>
                 </div>
             </div>
         </div>

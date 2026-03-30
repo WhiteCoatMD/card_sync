@@ -52,6 +52,7 @@
     <div class="header">
         <h1>Card Sync</h1>
         <div class="header-right">
+            <a href="#" class="btn btn-primary" id="view-site-btn" style="display:none;" target="_blank">View My Store</a>
             <a href="inventory.html" class="btn">Inventory</a>
             <a href="orders.html" class="btn">Orders</a>
 
@@ -157,6 +158,16 @@
         document.getElementById('user-name').textContent = user.email || '';
         document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
         if (user.isAdmin) document.getElementById('admin-link').style.display = '';
+
+        // Load store link
+        fetch('/api/shop', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(r => r.json()).then(data => {
+                if (data.success && data.shop.subdomain && data.shop.shop_enabled) {
+                    const btn = document.getElementById('view-site-btn');
+                    btn.href = 'https://' + data.shop.subdomain + '.collect-sync.com';
+                    btn.style.display = '';
+                }
+            });
 
         function toggleDropdown(id) {
             const menu = document.getElementById(id);
