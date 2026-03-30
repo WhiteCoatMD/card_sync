@@ -180,10 +180,10 @@
         const nav = document.getElementById('nav');
 
         if (token) {
-            nav.innerHTML = '<a href="admin.html" class="btn">Dashboard</a>';
+            nav.innerHTML = '<a href="admin.html" class="btn">Dashboard</a><a href="marketplace.html" class="btn">Marketplace</a>';
             loadCurrentPlan();
         } else {
-            nav.innerHTML = '<a href="/" class="btn">Home</a><a href="signup.html" class="btn btn-primary">Sign Up Free</a>';
+            nav.innerHTML = '<a href="/" class="btn">Home</a><a href="marketplace.html" class="btn">Marketplace</a><a href="login.html" class="btn">Log In</a><a href="signup.html" class="btn btn-primary">Sign Up Free</a>';
         }
 
         async function loadCurrentPlan() {

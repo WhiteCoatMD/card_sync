@@ -7,3 +7,7 @@ node_modules/
 google-credentials.json
 
 .vercel
+
+# Dev/test files
+test-all.js
+db/seed-demo-cards.js
