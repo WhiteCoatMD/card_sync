@@ -238,12 +238,7 @@
             params.set('sort', sort);
             params.set('order', order);
 
-            // API calls go to the main domain
-            const apiBase = window.location.hostname.includes('localhost')
-                ? ''
-                : 'https://collect-sync.com';
-
-            const data = await fetch(`${apiBase}/api/public/store?${params}`).then(r => r.json());
+            const data = await fetch(`/api/public/store?${params}`).then(r => r.json());
 
             if (!data.success) {
                 document.getElementById('store-content').style.display = 'none';
@@ -437,10 +432,8 @@
             btn.textContent = 'Processing...';
             btn.disabled = true;
 
-            const apiBase = window.location.hostname.includes('localhost') ? '' : 'https://collect-sync.com';
-
             try {
-                const resp = await fetch(apiBase + '/api/public/checkout', {
+                const resp = await fetch('/api/public/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
