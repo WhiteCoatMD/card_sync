@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Customers</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
+        .stat-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 16px; }
+        .stat-card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-card .value { font-size: 1.5rem; font-weight: 700; }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 1.5rem; justify-content: space-between; }
+        .toolbar input { padding: 8px 14px; border: 1px solid #333; border-radius: 6px; background: #1a1a2e; color: #fff; font-size: 13px; width: 250px; }
+        .toolbar input:focus { outline: none; border-color: #4a90d9; }
+
+        table { width: 100%; border-collapse: collapse; background: #1a1a2e; border-radius: 10px; overflow: hidden; border: 1px solid #2a2a3e; }
+        th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        th { color: #888; font-size: 11px; text-transform: uppercase; background: #12122a; }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; background: rgba(74,144,217,0.15); color: #4a90d9; margin-right: 4px; }
+        .tag-vip { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .tag-wholesale { background: rgba(156,39,176,0.15); color: #9c27b0; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a2e; border-radius: 12px; padding: 30px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { font-size: 1.1rem; margin-bottom: 20px; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4a90d9; }
+        .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        .detail-section { background: #12122a; border-radius: 8px; padding: 16px; margin-top: 16px; }
+        .detail-section h4 { font-size: 13px; color: #888; margin-bottom: 10px; }
+        .order-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e1e32; font-size: 13px; }
+        .empty { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync — Customers</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Customer</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="label">Total Customers</div><div class="value" id="s-total">0</div></div>
+            <div class="stat-card"><div class="label">Active (30 days)</div><div class="value" style="color:#4caf50;" id="s-active">0</div></div>
+            <div class="stat-card"><div class="label">Lifetime Revenue</div><div class="value" style="color:#4caf50;" id="s-revenue">$0</div></div>
+            <div class="stat-card"><div class="label">Avg. Spend</div><div class="value" style="color:#4a90d9;" id="s-avg">$0</div></div>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" id="search" placeholder="Search customers..." oninput="debounceLoad()">
+            <div style="display:flex;gap:8px;">
+                <select id="sort" onchange="loadCustomers()" style="padding:8px;border:1px solid #333;border-radius:6px;background:#1a1a2e;color:#fff;font-size:13px;">
+                    <option value="last_order_at-desc">Last Order</option>
+                    <option value="total_spent-desc">Top Spenders</option>
+                    <option value="order_count-desc">Most Orders</option>
+                    <option value="name-asc">Name A-Z</option>
+                    <option value="created_at-desc">Newest</option>
+                </select>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Orders</th>
+                    <th>Total Spent</th>
+                    <th>Last Order</th>
+                    <th>Tags</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="customers-body"></tbody>
+        </table>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+            <h2 id="modal-title">Add Customer</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-row">
+                <div class="form-group"><label>Name *</label><input type="text" id="f-name"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Email</label><input type="email" id="f-email"></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="f-phone"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Address</label><input type="text" id="f-address"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Tags (comma-separated)</label><input type="text" id="f-tags" placeholder="vip, wholesale, collector"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Notes</label><textarea id="f-notes" rows="3"></textarea></div>
+            </div>
+            <div class="form-actions">
+                <button class="btn" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCustomer()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeDetailModal()">
+        <div class="modal" id="detail-content"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        let debounceTimer;
+        function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(loadCustomers, 300); }
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+
+        function renderTags(tags) {
+            if (!tags) return '';
+            return tags.split(',').map(t => {
+                const tag = t.trim().toLowerCase();
+                const cls = tag === 'vip' ? 'tag-vip' : tag === 'wholesale' ? 'tag-wholesale' : '';
+                return '<span class="tag ' + cls + '">' + esc(t.trim()) + '</span>';
+            }).join('');
+        }
+
+        async function loadCustomers() {
+            const search = document.getElementById('search').value;
+            const [sort, order] = document.getElementById('sort').value.split('-');
+            const params = new URLSearchParams({ sort, order });
+            if (search) params.set('search', search);
+
+            const data = await apiFetch('/api/customers?' + params);
+            if (!data.success) return;
+
+            const s = data.stats;
+            document.getElementById('s-total').textContent = s.total;
+            document.getElementById('s-active').textContent = s.active_30d;
+            document.getElementById('s-revenue').textContent = '$' + parseFloat(s.lifetime_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('s-avg').textContent = '$' + parseFloat(s.avg_spent).toFixed(2);
+
+            const tbody = document.getElementById('customers-body');
+            if (data.customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty">No customers yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.customers.map(c => `
+                <tr style="cursor:pointer;" onclick="viewCustomer(${c.id})">
+                    <td><strong>${esc(c.name)}</strong></td>
+                    <td style="color:#888;">${esc(c.email || '—')}</td>
+                    <td>${c.order_count}</td>
+                    <td style="color:#4caf50;font-weight:600;">$${parseFloat(c.total_spent).toFixed(2)}</td>
+                    <td style="color:#888;font-size:12px;">${c.last_order_at ? new Date(c.last_order_at).toLocaleDateString() : '—'}</td>
+                    <td>${renderTags(c.tags)}</td>
+                    <td><button class="btn btn-sm" onclick="event.stopPropagation();editCustomer(${JSON.stringify(c).replace(/"/g, '&quot;')})">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Add Customer';
+            document.getElementById('edit-id').value = '';
+            ['name', 'email', 'phone', 'address', 'tags', 'notes'].forEach(f => document.getElementById('f-' + f).value = '');
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function editCustomer(c) {
+            document.getElementById('modal-title').textContent = 'Edit Customer';
+            document.getElementById('edit-id').value = c.id;
+            document.getElementById('f-name').value = c.name || '';
+            document.getElementById('f-email').value = c.email || '';
+            document.getElementById('f-phone').value = c.phone || '';
+            document.getElementById('f-address').value = c.address || '';
+            document.getElementById('f-tags').value = c.tags || '';
+            document.getElementById('f-notes').value = c.notes || '';
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function closeDetailModal() { document.getElementById('detail-modal').classList.remove('active'); }
+
+        async function saveCustomer() {
+            const id = document.getElementById('edit-id').value;
+            const body = {
+                name: document.getElementById('f-name').value.trim(),
+                email: document.getElementById('f-email').value.trim(),
+                phone: document.getElementById('f-phone').value.trim(),
+                address: document.getElementById('f-address').value.trim(),
+                tags: document.getElementById('f-tags').value.trim(),
+                notes: document.getElementById('f-notes').value.trim(),
+            };
+            if (!body.name) return alert('Name is required');
+
+            const url = id ? '/api/customers/' + id : '/api/customers';
+            const method = id ? 'PUT' : 'POST';
+            const data = await apiFetch(url, { method, body: JSON.stringify(body) });
+
+            if (data.success) { closeModal(); loadCustomers(); }
+            else alert(data.error || 'Failed');
+        }
+
+        async function viewCustomer(id) {
+            const data = await apiFetch('/api/customers/' + id);
+            if (!data.success) return;
+
+            const c = data.customer;
+            const modal = document.getElementById('detail-content');
+            modal.innerHTML = `
+                <h2>${esc(c.name)} ${renderTags(c.tags)}</h2>
+                <div style="color:#888;font-size:13px;margin-bottom:16px;">
+                    ${c.email ? esc(c.email) + ' &bull; ' : ''}${c.phone ? esc(c.phone) + ' &bull; ' : ''}Customer since ${new Date(c.created_at).toLocaleDateString()}
+                </div>
+                <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+                    <div class="stat-card"><div class="label">Orders</div><div class="value">${c.order_count}</div></div>
+                    <div class="stat-card"><div class="label">Total Spent</div><div class="value" style="color:#4caf50;">$${parseFloat(c.total_spent).toFixed(2)}</div></div>
+                    <div class="stat-card"><div class="label">Last Order</div><div class="value" style="font-size:1rem;">${c.last_order_at ? new Date(c.last_order_at).toLocaleDateString() : '—'}</div></div>
+                </div>
+                ${c.address ? '<p style="font-size:13px;color:#888;margin-bottom:8px;">Address: ' + esc(c.address) + '</p>' : ''}
+                ${c.notes ? '<p style="font-size:13px;color:#888;margin-bottom:16px;">Notes: ' + esc(c.notes) + '</p>' : ''}
+                <div class="detail-section">
+                    <h4>Order History</h4>
+                    ${data.orders.length === 0 ? '<div class="empty" style="padding:1rem;">No orders found</div>' :
+                        data.orders.map(o => `
+                            <div class="order-row">
+                                <span>#${o.id} — ${o.item_count} item${o.item_count > 1 ? 's' : ''}</span>
+                                <span style="color:#4caf50;font-weight:600;">$${parseFloat(o.total_amount).toFixed(2)}</span>
+                                <span style="color:#888;">${new Date(o.created_at).toLocaleDateString()}</span>
+                            </div>
+                        `).join('')}
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-danger btn-sm" onclick="deleteCustomer(${c.id})">Delete</button>
+                    <button class="btn" onclick="closeDetailModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('detail-modal').classList.add('active');
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm('Delete this customer?')) return;
+            const data = await apiFetch('/api/customers/' + id, { method: 'DELETE' });
+            if (data.success) { closeDetailModal(); loadCustomers(); }
+        }
+
+        loadCustomers();
+    </script>
+</body>
+</html>

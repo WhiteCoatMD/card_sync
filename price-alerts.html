@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Price Alerts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-danger { background: #d94a4a; border-color: #d94a4a; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .page-subtitle { color: #888; font-size: 14px; margin-bottom: 2rem; }
+
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #4a90d9; }
+        .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        .alert-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .alert-card.triggered { border-color: rgba(76,175,80,0.5); background: rgba(76,175,80,0.05); }
+        .alert-info h4 { font-size: 14px; margin-bottom: 4px; }
+        .alert-info .meta { font-size: 12px; color: #888; }
+        .alert-right { display: flex; align-items: center; gap: 16px; }
+        .alert-target { text-align: right; }
+        .alert-target .direction { font-size: 11px; color: #888; text-transform: uppercase; }
+        .alert-target .price { font-size: 18px; font-weight: 700; }
+        .price-above { color: #4caf50; }
+        .price-below { color: #f44336; }
+        .triggered-badge { background: rgba(76,175,80,0.15); color: #4caf50; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .current-price { font-size: 12px; color: #888; margin-top: 2px; }
+        .empty { text-align: center; padding: 2rem; color: #666; }
+        .note { background: #12122a; border-radius: 8px; padding: 14px; font-size: 13px; color: #888; margin-bottom: 2rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync — Price Alerts</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="inventory.html" class="btn">Inventory</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <p class="page-subtitle">Get notified when card market prices cross your thresholds. Checked daily via JustTCG and Scryfall.</p>
+
+        <div class="note">
+            Prices are checked once daily. Magic cards use Scryfall (very reliable). Other TCGs use JustTCG (best effort). Sports cards are not supported for price alerts.
+        </div>
+
+        <div class="section">
+            <h3>Create Alert</h3>
+            <div class="form-row">
+                <div class="form-group" style="flex:2;"><label>Card Name *</label><input type="text" id="f-card" placeholder="e.g. Charizard VMAX"></div>
+                <div class="form-group"><label>Category</label>
+                    <select id="f-category">
+                        <option value="">Any</option>
+                        <option value="pokemon">Pokemon</option>
+                        <option value="magic">Magic</option>
+                        <option value="yugioh">Yu-Gi-Oh!</option>
+                        <option value="one_piece">One Piece</option>
+                        <option value="lorcana">Lorcana</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Alert When Price...</label>
+                    <select id="f-direction">
+                        <option value="below">Drops Below (buy signal)</option>
+                        <option value="above">Rises Above (sell signal)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:0.6;">
+                    <label>Target Price ($)</label>
+                    <input type="number" id="f-price" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="createAlert()">Create Alert</button>
+            </div>
+        </div>
+
+        <h3 style="font-size:14px;color:#888;margin-bottom:12px;">Active Alerts</h3>
+        <div id="alerts-list"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, { ...options, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...options.headers } });
+            return res.json();
+        }
+
+        async function loadAlerts() {
+            const data = await apiFetch('/api/price-alerts');
+            const list = document.getElementById('alerts-list');
+
+            if (!data.success || data.alerts.length === 0) {
+                list.innerHTML = '<div class="empty">No price alerts set. Create one above to get started.</div>';
+                return;
+            }
+
+            list.innerHTML = data.alerts.map(a => `
+                <div class="alert-card${a.triggered ? ' triggered' : ''}">
+                    <div class="alert-info">
+                        <h4>${esc(a.card_name)}</h4>
+                        <div class="meta">
+                            ${a.category ? esc(a.category) + ' &bull; ' : ''}Created ${new Date(a.created_at).toLocaleDateString()}
+                            ${a.last_checked_price ? ' &bull; Last checked: $' + parseFloat(a.last_checked_price).toFixed(2) : ''}
+                        </div>
+                        ${a.triggered ? '<div style="margin-top:6px;"><span class="triggered-badge">TRIGGERED at $' + parseFloat(a.triggered_price).toFixed(2) + ' on ' + new Date(a.triggered_at).toLocaleDateString() + '</span></div>' : ''}
+                    </div>
+                    <div class="alert-right">
+                        <div class="alert-target">
+                            <div class="direction">${a.direction === 'below' ? 'drops below' : 'rises above'}</div>
+                            <div class="price ${a.direction === 'above' ? 'price-above' : 'price-below'}">$${parseFloat(a.target_price).toFixed(2)}</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" onclick="dismissAlert(${a.id})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createAlert() {
+            const card_name = document.getElementById('f-card').value.trim();
+            if (!card_name) return alert('Enter a card name');
+            const target_price = document.getElementById('f-price').value;
+            if (!target_price || parseFloat(target_price) <= 0) return alert('Enter a valid target price');
+
+            const data = await apiFetch('/api/price-alerts', {
+                method: 'POST',
+                body: JSON.stringify({
+                    card_name,
+                    category: document.getElementById('f-category').value || null,
+                    direction: document.getElementById('f-direction').value,
+                    target_price: parseFloat(target_price),
+                })
+            });
+
+            if (data.success) {
+                document.getElementById('f-card').value = '';
+                document.getElementById('f-price').value = '';
+                loadAlerts();
+            } else {
+                alert(data.error || 'Failed to create alert');
+            }
+        }
+
+        async function dismissAlert(id) {
+            await apiFetch('/api/price-alerts', { method: 'PUT', body: JSON.stringify({ alert_id: id, active: false }) });
+            loadAlerts();
+        }
+
+        loadAlerts();
+    </script>
+</body>
+</html>
