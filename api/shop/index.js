@@ -12,18 +12,15 @@ const { validateSubdomain } = require('../../lib/subdomain');
 
 const pool = getPool();
 
-module.exports = async function handler(req, res) {
+module.exports = requireAuth(async function handler(req, res) {
     setCorsHeaders(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
-
-    const user = await requireAuth(req, res);
-    if (!user) return;
 
     if (req.method === 'GET') {
         const result = await retryQuery(
             () => pool.query(
                 'SELECT subdomain, shop_name, shop_description, shop_enabled FROM users WHERE id = $1',
-                [user.id]
+                [req.user.id]
             ),
             'Shop - Get'
         );
@@ -42,16 +39,14 @@ module.exports = async function handler(req, res) {
     if (req.method === 'PUT') {
         const { subdomain, shop_name, shop_description, shop_enabled } = req.body;
 
-        // Validate subdomain if provided
         if (subdomain) {
             const error = validateSubdomain(subdomain);
             if (error) return res.status(400).json({ success: false, error });
 
-            // Check uniqueness
             const existing = await retryQuery(
                 () => pool.query(
                     'SELECT id FROM users WHERE subdomain = $1 AND id != $2',
-                    [subdomain.toLowerCase(), user.id]
+                    [subdomain.toLowerCase(), req.user.id]
                 ),
                 'Shop - Check subdomain'
             );
@@ -74,7 +69,7 @@ module.exports = async function handler(req, res) {
                     shop_name || null,
                     shop_description || null,
                     shop_enabled === true,
-                    user.id,
+                    req.user.id,
                 ]
             ),
             'Shop - Update'
@@ -84,4 +79,4 @@ module.exports = async function handler(req, res) {
     }
 
     return res.status(405).json({ success: false, error: 'Method not allowed' });
-};
+});
