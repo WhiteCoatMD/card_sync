@@ -35,7 +35,8 @@
       "Bash(find /c/Users/13183/Card_Sync -type f -name *.js -path */api/orders/* -o -path */api/subscription/* -o -path */api/inventory/*)",
       "Bash(grep:*)",
       "Bash(find /c/Users/13183/Card_Sync -type f \\\\\\(-name *.js -o -name *.html -o -name *.json \\\\\\))",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(nslookup demoshop.collect-sync.com)"
     ]
   }
 }
