@@ -1,27 +1,25 @@
 /**
- * Storefront router — serves store.html for subdomains, index for root domain
- * This exists because Vercel can't do host-based rewrites for static HTML projects
+ * Storefront router — serves store.html for subdomains, _index.html for root domain
+ * Uses internal fetch to get the static file from the same deployment
  */
-const fs = require('fs');
-const path = require('path');
 
 module.exports = async function handler(req, res) {
     const host = (req.headers.host || '').toLowerCase();
     const rootDomains = ['collect-sync.com', 'www.collect-sync.com', 'cardsync-lemon.vercel.app'];
 
-    let file;
-    if (!rootDomains.includes(host) && host.endsWith('.collect-sync.com')) {
-        file = 'store.html';
-    } else {
-        file = '_index.html';
-    }
+    const isSubdomain = !rootDomains.includes(host) && host.endsWith('.collect-sync.com');
+    const file = isSubdomain ? 'store.html' : '_index.html';
 
     try {
-        const html = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+        const proto = req.headers['x-forwarded-proto'] || 'https';
+        const response = await fetch(`${proto}://${host}/${file}`);
+        const html = await response.text();
+
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60');
         return res.status(200).send(html);
     } catch (e) {
-        return res.status(500).send('Page not found');
+        // Fallback redirect
+        return res.writeHead(302, { Location: '/' + file }).end();
     }
 };
