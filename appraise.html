@@ -68,7 +68,11 @@
 
     <div class="container">
         <h1 class="page-title">Free Collection Appraisal</h1>
-        <p class="page-subtitle">Enter your cards below and get instant market values. No account required. Powered by real-time pricing from JustTCG and Scryfall.</p>
+        <p class="page-subtitle">Enter your cards below and get instant estimated market values. No account required.</p>
+
+        <div style="background:#12122a;border:1px solid #2a2a3e;border-radius:8px;padding:14px 18px;margin-bottom:2rem;font-size:12px;color:#888;line-height:1.7;">
+            <strong style="color:#ff9800;">Disclaimer:</strong> Values shown are estimated market prices from third-party sources (JustTCG, Scryfall) and are provided for informational purposes only. Actual card values vary based on condition, edition, printing, grading, and current market demand. These estimates do not constitute an offer to buy or sell. Collect Sync makes no guarantees regarding the accuracy of pricing data. Always verify values independently before making buying or selling decisions.
+        </div>
 
         <div class="section" id="input-section">
             <h3>Your Cards (up to 25)</h3>
@@ -89,6 +93,10 @@
 
             <div style="text-align:center;margin:1rem 0;">
                 <button class="btn btn-primary" onclick="document.getElementById('results-section').classList.add('hidden');document.getElementById('input-section').classList.remove('hidden');">Appraise More Cards</button>
+            </div>
+
+            <div style="text-align:center;font-size:11px;color:#555;margin-top:1rem;line-height:1.6;">
+                Estimates based on market data from JustTCG and Scryfall. Actual values may differ based on condition, edition, and market conditions. Not an offer to purchase.
             </div>
 
             <div class="cta-box">
