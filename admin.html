@@ -9,10 +9,18 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
         .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
         .header h1 { font-size: 1.5rem; }
-        .header-right { display: flex; gap: 10px; align-items: center; }
+        .header-right { display: flex; gap: 8px; align-items: center; }
         .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
         .btn:hover { background: rgba(255,255,255,0.2); }
         .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .nav-dropdown { position: relative; display: inline-block; }
+        .nav-dropdown-btn { cursor: pointer; }
+        .nav-dropdown-menu { display: none; position: absolute; top: 100%; right: 0; background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; min-width: 180px; padding: 6px 0; z-index: 50; margin-top: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .nav-dropdown-menu.open { display: block; }
+        .nav-dropdown-menu a { display: block; padding: 8px 16px; color: #ccc; text-decoration: none; font-size: 13px; }
+        .nav-dropdown-menu a:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-dropdown-menu .divider { border-top: 1px solid #2a2a3e; margin: 4px 0; }
+        .nav-dropdown-menu .menu-label { padding: 6px 16px 2px; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         .welcome { font-size: 1.2rem; color: #aaa; margin-bottom: 2rem; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 2rem; }
@@ -46,18 +54,39 @@
         <div class="header-right">
             <a href="inventory.html" class="btn">Inventory</a>
             <a href="orders.html" class="btn">Orders</a>
-            <a href="marketplace.html" class="btn">Marketplace</a>
-            <a href="analytics.html" class="btn" data-feature="analytics">Analytics</a>
-            <a href="buylist-review.html" class="btn">Buylist</a>
-            <a href="buying.html" class="btn">Buying</a>
-            <a href="grading.html" class="btn" data-feature="grading_tracker">Grading</a>
-            <a href="shipping.html" class="btn">Shipping</a>
-            <a href="live-sales.html" class="btn">Live Sales</a>
-            <a href="customers.html" class="btn">Customers</a>
-            <a href="price-alerts.html" class="btn" data-feature="analytics">Price Alerts</a>
-            <a href="reports.html" class="btn" data-feature="analytics">Reports</a>
-            <a href="integrations.html" class="btn">Integrations</a>
-            <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Super Admin</a>
+
+            <div class="nav-dropdown">
+                <div class="btn nav-dropdown-btn" onclick="toggleDropdown('sell-menu')">Selling ▾</div>
+                <div class="nav-dropdown-menu" id="sell-menu">
+                    <a href="marketplace.html">Marketplace</a>
+                    <a href="live-sales.html">Live Sales</a>
+                    <a href="shipping.html">Shipping</a>
+                    <a href="customers.html">Customers</a>
+                </div>
+            </div>
+
+            <div class="nav-dropdown">
+                <div class="btn nav-dropdown-btn" onclick="toggleDropdown('buy-menu')">Buying ▾</div>
+                <div class="nav-dropdown-menu" id="buy-menu">
+                    <a href="buylist-review.html">Buylist Review</a>
+                    <a href="buying.html">Buying Marketplace</a>
+                    <a href="sell.html">Sell Cards Page</a>
+                </div>
+            </div>
+
+            <div class="nav-dropdown">
+                <div class="btn nav-dropdown-btn" onclick="toggleDropdown('tools-menu')">Tools ▾</div>
+                <div class="nav-dropdown-menu" id="tools-menu">
+                    <a href="analytics.html" data-feature="analytics">Analytics</a>
+                    <a href="reports.html" data-feature="analytics">Reports</a>
+                    <a href="price-alerts.html" data-feature="analytics">Price Alerts</a>
+                    <div class="divider"></div>
+                    <a href="grading.html" data-feature="grading_tracker">Grading Tracker</a>
+                    <a href="integrations.html">Integrations</a>
+                </div>
+            </div>
+
+            <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Admin</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
             <button class="btn" onclick="logout()">Logout</button>
         </div>
@@ -128,6 +157,18 @@
         document.getElementById('user-name').textContent = user.email || '';
         document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
         if (user.isAdmin) document.getElementById('admin-link').style.display = '';
+
+        function toggleDropdown(id) {
+            const menu = document.getElementById(id);
+            const wasOpen = menu.classList.contains('open');
+            document.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+            if (!wasOpen) menu.classList.add('open');
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-dropdown')) {
+                document.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+            }
+        });
 
         // Feature gating — grey out locked nav items
         async function checkFeatures() {

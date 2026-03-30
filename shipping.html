@@ -33,11 +33,12 @@
         .form-group .help { font-size: 11px; color: #555; margin-top: 4px; }
         .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
-        .rate-option { background: #0d0d1a; border: 2px solid #2a2a3e; border-radius: 8px; padding: 14px 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s; }
+        .rates-container { max-height: 300px; overflow-y: auto; margin-bottom: 16px; }
+        .rate-option { background: #0d0d1a; border: 2px solid #2a2a3e; border-radius: 8px; padding: 12px 16px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s; }
         .rate-option:hover, .rate-option.selected { border-color: #4a90d9; }
         .rate-carrier { font-weight: 700; font-size: 14px; }
         .rate-service { color: #888; font-size: 12px; margin-top: 2px; }
-        .rate-price { font-weight: 700; color: #4caf50; font-size: 18px; }
+        .rate-price { font-weight: 700; color: #4caf50; font-size: 16px; }
         .rate-days { color: #888; font-size: 11px; text-align: right; }
 
         .label-result { background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; padding: 24px; text-align: center; }
@@ -120,10 +121,14 @@
             </div>
 
             <div class="section hidden" id="rates-section">
-                <h3>Select Rate</h3>
-                <div id="rates-list"></div>
-                <div class="form-actions">
-                    <button class="btn btn-green" id="buy-btn" onclick="purchaseLabel()" disabled>Select a rate to continue</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3 style="margin:0;">Select Rate</h3>
+                    <div id="surcharge-notice"></div>
+                </div>
+                <div class="rates-container" id="rates-list"></div>
+                <div style="background:#12122a;border-radius:8px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                    <div id="selected-rate-info" style="font-size:13px;color:#888;">Click a rate above to select it</div>
+                    <button class="btn btn-green" id="buy-btn" onclick="purchaseLabel()" disabled style="padding:12px 24px;font-size:15px;white-space:nowrap;">Select a rate</button>
                 </div>
             </div>
 
@@ -276,14 +281,14 @@
                 </div>
             `).join('');
 
-            if (shippingSurcharge > 0) {
-                list.innerHTML += '<div style="background:rgba(255,152,0,0.1);border:1px solid rgba(255,152,0,0.3);border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#ff9800;">$' + shippingSurcharge.toFixed(2) + ' service fee applies on the Free plan. <a href="pricing.html" style="color:#4a90d9;">Upgrade</a> to remove it.</div>';
-            }
-
             document.getElementById('rates-section').classList.remove('hidden');
             document.getElementById('label-section').classList.add('hidden');
             document.getElementById('buy-btn').disabled = true;
-            document.getElementById('buy-btn').textContent = 'Select a rate to continue';
+            document.getElementById('buy-btn').textContent = 'Select a rate';
+            document.getElementById('selected-rate-info').textContent = 'Click a rate above to select it';
+            document.getElementById('surcharge-notice').innerHTML = shippingSurcharge > 0
+                ? '<span style="font-size:12px;color:#ff9800;">+$' + shippingSurcharge.toFixed(2) + ' fee on Free plan — <a href="pricing.html" style="color:#4a90d9;">upgrade to remove</a></span>'
+                : '';
         }
 
         function selectRate(rateId, amount, el) {
@@ -293,7 +298,10 @@
             el.classList.add('selected');
             document.getElementById('buy-btn').disabled = false;
             const total = amount + shippingSurcharge;
-            document.getElementById('buy-btn').textContent = 'Buy Label — $' + total.toFixed(2) + (shippingSurcharge > 0 ? ' (incl. $' + shippingSurcharge.toFixed(2) + ' fee)' : '');
+            document.getElementById('buy-btn').textContent = 'Buy Label — $' + total.toFixed(2);
+            const carrier = el.querySelector('.rate-carrier').textContent;
+            const service = el.querySelector('.rate-service').textContent;
+            document.getElementById('selected-rate-info').innerHTML = '<strong>' + carrier + '</strong> ' + service + (shippingSurcharge > 0 ? ' <span style="color:#ff9800;">(+$' + shippingSurcharge.toFixed(2) + ' fee)</span>' : '');
         }
 
         async function purchaseLabel() {
