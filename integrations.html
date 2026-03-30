@@ -386,8 +386,8 @@
             </div>
         </div>
 
-        <!-- Coming Soon: TCGplayer -->
-        <div class="integration-card coming-soon">
+        <!-- TCGplayer Integration -->
+        <div class="integration-card" id="tcg-card">
             <div class="integration-header">
                 <div class="integration-icon" style="background:rgba(255,102,0,0.15);">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -395,10 +395,35 @@
                     </svg>
                 </div>
                 <div>
-                    <h2>TCGplayer <span class="tag tag-soon">Coming Soon</span></h2>
+                    <h2>TCGplayer <span class="tag tag-not-connected" id="tcg-tag">Not Connected</span></h2>
                 </div>
             </div>
-            <p class="integration-desc">Import pricing data from TCGplayer and cross-list your inventory on their marketplace.</p>
+
+            <p class="integration-desc">
+                Match your inventory to TCGplayer products and sync pricing. List your cards on the largest TCG marketplace for Pokemon, Magic, and Yu-Gi-Oh.
+            </p>
+
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="tcg-dot"></div>
+                    <span id="tcg-status-text">Not connected</span>
+                </div>
+                <div class="status-actions" id="tcg-status-actions"></div>
+            </div>
+
+            <div class="connect-form" id="tcg-form">
+                <h3>Connect TCGplayer</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>TCGplayer Store Name</label>
+                        <input type="text" id="tcg-store-name" placeholder="Your TCGplayer seller name">
+                        <div class="help">Enter your TCGplayer seller/store name. API keys are configured at the platform level.</div>
+                    </div>
+                </div>
+                <div class="connect-actions">
+                    <button class="btn" style="background:#ff6600;border-color:#ff6600;" onclick="connectTcgplayer()">Connect TCGplayer</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -780,6 +805,89 @@
         }
 
         loadStripeStatus();
+
+        // --- TCGplayer ---
+        async function loadTcgplayerStatus() {
+            const data = await apiFetch('/api/tcgplayer/status');
+            const tag = document.getElementById('tcg-tag');
+            const dot = document.getElementById('tcg-dot');
+            const statusText = document.getElementById('tcg-status-text');
+            const actions = document.getElementById('tcg-status-actions');
+            const form = document.getElementById('tcg-form');
+
+            if (data.success && data.connected) {
+                const conn = data.connection;
+                tag.className = 'tag tag-connected';
+                tag.textContent = 'Connected';
+                dot.className = 'status-dot on';
+
+                let text = conn.store_name || 'Connected';
+                if (conn.last_synced_at) text += ' — Last sync: ' + new Date(conn.last_synced_at).toLocaleString();
+                if (conn.last_sync_status === 'error') text += ' (error)';
+                statusText.textContent = text;
+
+                actions.innerHTML = `
+                    <button class="btn btn-sm" style="background:#ff6600;border-color:#ff6600;" onclick="syncTcgplayer('match')">Match Products</button>
+                    <button class="btn btn-sm" style="background:#ff6600;border-color:#ff6600;" onclick="syncTcgplayer('push')">Push to TCGplayer</button>
+                    <button class="btn btn-sm btn-danger" onclick="disconnectTcgplayer()">Disconnect</button>
+                `;
+                form.style.display = 'none';
+            } else {
+                tag.className = 'tag tag-not-connected';
+                tag.textContent = 'Not Connected';
+                dot.className = 'status-dot off';
+                statusText.textContent = 'Not connected';
+                actions.innerHTML = '';
+                form.style.display = 'block';
+            }
+        }
+
+        async function connectTcgplayer() {
+            const storeName = document.getElementById('tcg-store-name').value.trim();
+            if (!storeName) return alert('Enter your TCGplayer store name');
+
+            const data = await apiFetch('/api/tcgplayer/connect', {
+                method: 'POST',
+                body: JSON.stringify({ store_name: storeName })
+            });
+
+            if (data.success) {
+                loadTcgplayerStatus();
+                alert('TCGplayer connected!');
+            } else {
+                alert(data.error || 'Failed to connect');
+            }
+        }
+
+        async function syncTcgplayer(action) {
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = action === 'match' ? 'Matching...' : 'Pushing...';
+            btn.disabled = true;
+
+            const data = await apiFetch('/api/tcgplayer/sync', {
+                method: 'POST',
+                body: JSON.stringify({ action })
+            });
+
+            btn.textContent = orig;
+            btn.disabled = false;
+
+            if (data.success) {
+                loadTcgplayerStatus();
+                alert(data.message);
+            } else {
+                alert(data.error || 'Sync failed');
+            }
+        }
+
+        async function disconnectTcgplayer() {
+            if (!confirm('Disconnect TCGplayer? Product matches will be cleared.')) return;
+            const data = await apiFetch('/api/tcgplayer/status', { method: 'DELETE' });
+            if (data.success) loadTcgplayerStatus();
+        }
+
+        loadTcgplayerStatus();
 
         // --- Return Address ---
         async function loadReturnAddress() {
