@@ -141,6 +141,55 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
+                        <label>Store Theme</label>
+                        <div id="theme-picker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;">
+                            <div class="theme-option" data-theme="midnight" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#0a0a1a,#1a1a2e);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Midnight</span>
+                            </div>
+                            <div class="theme-option" data-theme="dark-slate" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#0f1419,#1c2733);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Dark Slate</span>
+                            </div>
+                            <div class="theme-option" data-theme="forest" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#0a1a0a,#1a2e1a);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Forest</span>
+                            </div>
+                            <div class="theme-option" data-theme="crimson" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#1a0a0a,#2e1a1a);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Crimson</span>
+                            </div>
+                            <div class="theme-option" data-theme="royal" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#0f0a1a,#1e1a2e);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Royal</span>
+                            </div>
+                            <div class="theme-option" data-theme="ocean" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#0a1a1a,#1a2e2e);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Ocean</span>
+                            </div>
+                            <div class="theme-option" data-theme="sunset" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#1a0f0a,#2e1e1a);border-radius:4px;margin-bottom:4px;"></div>
+                                <span style="font-size:11px;color:#aaa;">Sunset</span>
+                            </div>
+                            <div class="theme-option" data-theme="clean-light" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#f5f5f5,#ffffff);border-radius:4px;margin-bottom:4px;border:1px solid #ddd;"></div>
+                                <span style="font-size:11px;color:#aaa;">Clean Light</span>
+                            </div>
+                            <div class="theme-option" data-theme="warm-light" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:24px;background:linear-gradient(135deg,#faf8f5,#ffffff);border-radius:4px;margin-bottom:4px;border:1px solid #ddd;"></div>
+                                <span style="font-size:11px;color:#aaa;">Warm Light</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.5;">
+                        <label>Custom Accent Color (optional)</label>
+                        <input type="color" id="shop-accent-color" value="#4a90d9" style="width:50px;height:36px;padding:2px;cursor:pointer;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="checkbox" id="shop-enabled" style="width:auto;">
                             Enable store (make it publicly visible)
@@ -691,6 +740,19 @@
         loadEbayStatus();
 
         // --- Online Store ---
+        let selectedTheme = 'midnight';
+
+        function selectTheme(el) {
+            selectedTheme = el.dataset.theme;
+            highlightTheme(selectedTheme);
+        }
+
+        function highlightTheme(theme) {
+            document.querySelectorAll('.theme-option').forEach(t => {
+                t.style.borderColor = t.dataset.theme === theme ? '#4a90d9' : '#333';
+            });
+        }
+
         async function loadShopSettings() {
             const data = await apiFetch('/api/shop');
             const tag = document.getElementById('shop-tag');
@@ -703,6 +765,9 @@
                 document.getElementById('shop-name').value = data.shop.shop_name || '';
                 document.getElementById('shop-description').value = data.shop.shop_description || '';
                 document.getElementById('shop-enabled').checked = data.shop.shop_enabled;
+                selectedTheme = data.shop.shop_theme || 'midnight';
+                highlightTheme(selectedTheme);
+                if (data.shop.shop_accent_color) document.getElementById('shop-accent-color').value = data.shop.shop_accent_color;
 
                 if (data.shop.shop_enabled) {
                     tag.className = 'tag tag-connected';
@@ -725,6 +790,9 @@
             const shop_name = document.getElementById('shop-name').value.trim();
             const shop_description = document.getElementById('shop-description').value.trim();
             const shop_enabled = document.getElementById('shop-enabled').checked;
+            const shop_theme = selectedTheme;
+            const accentInput = document.getElementById('shop-accent-color').value;
+            const shop_accent_color = accentInput !== '#4a90d9' ? accentInput : null;
 
             if (!subdomain) return alert('Please enter a subdomain');
 
@@ -734,7 +802,7 @@
 
             const data = await apiFetch('/api/shop', {
                 method: 'PUT',
-                body: JSON.stringify({ subdomain, shop_name, shop_description, shop_enabled })
+                body: JSON.stringify({ subdomain, shop_name, shop_description, shop_enabled, shop_theme, shop_accent_color })
             });
 
             btn.textContent = 'Save Store Settings';

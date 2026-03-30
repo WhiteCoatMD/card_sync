@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS shop_theme VARCHAR(50) DEFAULT 'midnight';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS shop_accent_color VARCHAR(20);

@@ -109,6 +109,8 @@ module.exports = async function handler(req, res) {
                 name: dealer.shop_name || dealer.display_name,
                 description: dealer.shop_description || '',
                 subdomain: dealer.subdomain,
+                theme: dealer.shop_theme || 'midnight',
+                accent_color: dealer.shop_accent_color || null,
             },
             cards: result.rows,
             categories: categoriesResult.rows,

@@ -19,7 +19,7 @@ module.exports = requireAuth(async function handler(req, res) {
     if (req.method === 'GET') {
         const result = await retryQuery(
             () => pool.query(
-                'SELECT subdomain, shop_name, shop_description, shop_enabled FROM users WHERE id = $1',
+                'SELECT subdomain, shop_name, shop_description, shop_enabled, shop_theme, shop_accent_color FROM users WHERE id = $1',
                 [req.user.id]
             ),
             'Shop - Get'
@@ -32,12 +32,14 @@ module.exports = requireAuth(async function handler(req, res) {
                 shop_name: shop.shop_name || '',
                 shop_description: shop.shop_description || '',
                 shop_enabled: shop.shop_enabled || false,
+                shop_theme: shop.shop_theme || 'midnight',
+                shop_accent_color: shop.shop_accent_color || '',
             }
         });
     }
 
     if (req.method === 'PUT') {
-        const { subdomain, shop_name, shop_description, shop_enabled } = req.body;
+        const { subdomain, shop_name, shop_description, shop_enabled, shop_theme, shop_accent_color } = req.body;
 
         if (subdomain) {
             const error = validateSubdomain(subdomain);
@@ -62,13 +64,17 @@ module.exports = requireAuth(async function handler(req, res) {
                     shop_name = $2,
                     shop_description = $3,
                     shop_enabled = $4,
+                    shop_theme = $5,
+                    shop_accent_color = $6,
                     updated_at = NOW()
-                 WHERE id = $5`,
+                 WHERE id = $7`,
                 [
                     subdomain ? subdomain.toLowerCase().trim() : null,
                     shop_name || null,
                     shop_description || null,
                     shop_enabled === true,
+                    shop_theme || 'midnight',
+                    shop_accent_color || null,
                     req.user.id,
                 ]
             ),
