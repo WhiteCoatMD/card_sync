@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Free Collection Appraisal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-green { background: #4caf50; border-color: #4caf50; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        .page-title { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #888; font-size: 15px; margin-bottom: 2rem; line-height: 1.6; }
+
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+
+        .card-entry { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .card-entry input, .card-entry select { padding: 10px; border: 1px solid #333; border-radius: 6px; background: #0d0d1a; color: #fff; font-size: 14px; }
+        .card-entry .card-name { flex: 3; }
+        .card-entry .card-cat { flex: 1; }
+        .card-entry .card-qty { flex: 0 0 60px; }
+        .card-entry .remove-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 18px; flex: 0 0 24px; }
+        .card-entry .remove-btn:hover { color: #f44336; }
+        .actions { display: flex; gap: 10px; justify-content: space-between; margin-top: 16px; }
+
+        /* Results */
+        .result-card { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #2a2a3e; align-items: center; }
+        .result-card:last-child { border-bottom: none; }
+        .result-img { width: 50px; height: 70px; background: #12122a; border-radius: 4px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #333; font-size: 22px; }
+        .result-img img { width: 100%; height: 100%; object-fit: contain; }
+        .result-info { flex: 1; }
+        .result-info h4 { font-size: 14px; margin-bottom: 2px; }
+        .result-info .meta { font-size: 12px; color: #888; }
+        .result-price { text-align: right; }
+        .result-price .unit { font-size: 16px; font-weight: 700; color: #4caf50; }
+        .result-price .total { font-size: 12px; color: #888; }
+        .result-notfound { color: #666; font-style: italic; font-size: 13px; }
+
+        .summary-box { background: rgba(74,144,217,0.1); border: 1px solid rgba(74,144,217,0.3); border-radius: 10px; padding: 24px; text-align: center; margin-bottom: 20px; }
+        .summary-value { font-size: 2.5rem; font-weight: 800; color: #4caf50; margin-bottom: 4px; }
+        .summary-label { color: #888; font-size: 14px; }
+        .summary-detail { color: #888; font-size: 13px; margin-top: 8px; }
+
+        .cta-box { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 24px; text-align: center; margin-top: 2rem; }
+        .cta-box h3 { margin-bottom: 8px; }
+        .cta-box p { color: #888; font-size: 14px; margin-bottom: 16px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync</h1>
+        <div class="nav">
+            <a href="/" class="btn">Home</a>
+            <a href="marketplace.html" class="btn">Marketplace</a>
+            <a href="sell.html" class="btn">Sell Cards</a>
+            <a href="signup.html" class="btn btn-primary">Sign Up</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Free Collection Appraisal</h1>
+        <p class="page-subtitle">Enter your cards below and get instant market values. No account required. Powered by real-time pricing from JustTCG and Scryfall.</p>
+
+        <div class="section" id="input-section">
+            <h3>Your Cards (up to 25)</h3>
+            <div id="cards-list"></div>
+            <div class="actions">
+                <button class="btn" onclick="addCard()">+ Add Card</button>
+                <button class="btn btn-green" onclick="appraise()" id="appraise-btn" style="padding:10px 24px;font-size:15px;">Get Appraisal</button>
+            </div>
+        </div>
+
+        <div id="results-section" class="hidden">
+            <div class="summary-box" id="summary"></div>
+
+            <div class="section">
+                <h3>Card Values</h3>
+                <div id="results-list"></div>
+            </div>
+
+            <div style="text-align:center;margin:1rem 0;">
+                <button class="btn btn-primary" onclick="document.getElementById('results-section').classList.add('hidden');document.getElementById('input-section').classList.remove('hidden');">Appraise More Cards</button>
+            </div>
+
+            <div class="cta-box">
+                <h3>Want to sell these cards?</h3>
+                <p>Post them to our marketplace and let dealers make you offers, or sign up as a dealer to manage your own inventory.</p>
+                <div style="display:flex;gap:10px;justify-content:center;">
+                    <a href="sell.html" class="btn btn-green">Sell Your Cards</a>
+                    <a href="signup.html" class="btn btn-primary">Become a Dealer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cardCount = 0;
+
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        function addCard() {
+            if (cardCount >= 25) return alert('Maximum 25 cards per appraisal');
+            cardCount++;
+            const div = document.createElement('div');
+            div.className = 'card-entry';
+            div.innerHTML = `
+                <input type="text" class="card-name" placeholder="Card name (e.g. Charizard VMAX)">
+                <select class="card-cat">
+                    <option value="">Any</option>
+                    <option value="pokemon">Pokemon</option>
+                    <option value="magic">Magic</option>
+                    <option value="yugioh">Yu-Gi-Oh!</option>
+                    <option value="lorcana">Lorcana</option>
+                    <option value="one_piece">One Piece</option>
+                    <option value="sports">Sports</option>
+                </select>
+                <input type="number" class="card-qty" value="1" min="1" placeholder="Qty">
+                <button class="remove-btn" onclick="this.closest('.card-entry').remove()">&times;</button>
+            `;
+            document.getElementById('cards-list').appendChild(div);
+        }
+
+        async function appraise() {
+            const entries = document.querySelectorAll('.card-entry');
+            const cards = [];
+            entries.forEach(e => {
+                const name = e.querySelector('.card-name').value.trim();
+                if (!name) return;
+                cards.push({
+                    name,
+                    category: e.querySelector('.card-cat').value || null,
+                    quantity: parseInt(e.querySelector('.card-qty').value) || 1,
+                });
+            });
+
+            if (cards.length === 0) return alert('Add at least one card');
+
+            const btn = document.getElementById('appraise-btn');
+            btn.textContent = 'Appraising...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/public/appraise', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cards }),
+                });
+                const data = await resp.json();
+
+                btn.textContent = 'Get Appraisal';
+                btn.disabled = false;
+
+                if (!data.success) return alert(data.error || 'Appraisal failed');
+
+                // Show results
+                document.getElementById('input-section').classList.add('hidden');
+                document.getElementById('results-section').classList.remove('hidden');
+
+                const s = data.summary;
+                document.getElementById('summary').innerHTML = `
+                    <div class="summary-value">$${s.estimated_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div class="summary-label">Estimated Collection Value</div>
+                    <div class="summary-detail">${s.priced} of ${s.total_cards} cards priced${s.not_found > 0 ? ' &bull; ' + s.not_found + ' not found' : ''}</div>
+                `;
+
+                const list = document.getElementById('results-list');
+                list.innerHTML = data.results.map(r => `
+                    <div class="result-card">
+                        <div class="result-img">${r.image_url ? '<img src="' + esc(r.image_url) + '">' : '&#127183;'}</div>
+                        <div class="result-info">
+                            <h4>${esc(r.name)}${r.quantity > 1 ? ' <span style="color:#888;">x' + r.quantity + '</span>' : ''}</h4>
+                            <div class="meta">
+                                ${r.matched_name && r.matched_name !== r.name ? 'Matched: ' + esc(r.matched_name) + ' &bull; ' : ''}
+                                ${r.source ? 'via ' + esc(r.source) : ''}
+                            </div>
+                        </div>
+                        <div class="result-price">
+                            ${r.market_price !== null
+                                ? '<div class="unit">$' + parseFloat(r.market_price).toFixed(2) + '</div>' +
+                                  (r.quantity > 1 ? '<div class="total">$' + r.total_value.toFixed(2) + ' total</div>' : '') +
+                                  (r.foil_price ? '<div class="total">Foil: $' + parseFloat(r.foil_price).toFixed(2) + '</div>' : '')
+                                : '<div class="result-notfound">Not found</div>'}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                btn.textContent = 'Get Appraisal';
+                btn.disabled = false;
+                alert('Connection error');
+            }
+        }
+
+        // Start with 3 empty rows
+        addCard(); addCard(); addCard();
+    </script>
+</body>
+</html>

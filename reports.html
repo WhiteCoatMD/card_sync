@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect Sync — Sales Reports</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
+        .header { background: #1a1a2e; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .btn:hover { background: rgba(255,255,255,0.2); }
+        .btn-primary { background: #4a90d9; border-color: #4a90d9; }
+        .btn-green { background: #4caf50; border-color: #4caf50; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 2rem; justify-content: space-between; flex-wrap: wrap; }
+        .period-tabs { display: flex; gap: 0; }
+        .period-tab { padding: 8px 16px; font-size: 13px; color: #888; cursor: pointer; border: 1px solid #2a2a3e; background: #1a1a2e; }
+        .period-tab:first-child { border-radius: 6px 0 0 6px; }
+        .period-tab:last-child { border-radius: 0 6px 6px 0; }
+        .period-tab.active { color: #fff; background: #4a90d9; border-color: #4a90d9; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+        .stat-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 18px; }
+        .stat-card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-card .value { font-size: 1.5rem; font-weight: 700; }
+
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+        .section h3 { font-size: 14px; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #2a2a3e; }
+        th { color: #888; font-size: 11px; text-transform: uppercase; }
+        .empty { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Collect Sync — Sales Reports</h1>
+        <div class="nav">
+            <a href="admin.html" class="btn">Dashboard</a>
+            <a href="orders.html" class="btn">Orders</a>
+            <a id="csv-link" class="btn btn-green" target="_blank">Export CSV</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="toolbar">
+            <div class="period-tabs">
+                <div class="period-tab" onclick="loadReport('week')">Week</div>
+                <div class="period-tab active" onclick="loadReport('month')">Month</div>
+                <div class="period-tab" onclick="loadReport('quarter')">Quarter</div>
+                <div class="period-tab" onclick="loadReport('year')">Year</div>
+            </div>
+            <div style="color:#888;font-size:13px;" id="date-range"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="label">Gross Revenue</div><div class="value" style="color:#4caf50;" id="s-revenue">$0</div></div>
+            <div class="stat-card"><div class="label">Total Sales</div><div class="value" id="s-sales">0</div></div>
+            <div class="stat-card"><div class="label">Total Purchases</div><div class="value" style="color:#ff9800;" id="s-purchases">0</div></div>
+            <div class="stat-card"><div class="label">Cost of Goods</div><div class="value" style="color:#ff9800;" id="s-cost">$0</div></div>
+            <div class="stat-card"><div class="label">Net Profit</div><div class="value" style="color:#4caf50;" id="s-profit">$0</div></div>
+            <div class="stat-card"><div class="label">Shipping Costs</div><div class="value" id="s-shipping">$0</div></div>
+        </div>
+
+        <div class="section">
+            <h3>Top Selling Items</h3>
+            <table>
+                <thead><tr><th>Card</th><th>Category</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+                <tbody id="top-items"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3>Daily Breakdown</h3>
+            <table>
+                <thead><tr><th>Date</th><th>Sales</th><th>Revenue</th><th>Purchases</th><th>Cost</th><th>Net</th></tr></thead>
+                <tbody id="daily-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('auth_token');
+        if (!token) window.location.href = 'login.html';
+        let currentPeriod = 'month';
+
+        function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        async function loadReport(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const res = await fetch('/api/reports?period=' + period, { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            if (!data.success) return;
+
+            // Update CSV link
+            document.getElementById('csv-link').href = '/api/reports?period=' + period + '&export=csv';
+
+            // Date range
+            document.getElementById('date-range').textContent =
+                new Date(data.period.start).toLocaleDateString() + ' — ' + new Date(data.period.end).toLocaleDateString();
+
+            // Stats
+            const s = data.summary;
+            const revenue = parseFloat(s.gross_revenue);
+            const cost = parseFloat(s.total_cost);
+            const shipping = parseFloat(data.shipping.total_shipping);
+            const profit = revenue - cost - shipping;
+
+            document.getElementById('s-revenue').textContent = '$' + revenue.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('s-sales').textContent = s.total_sales;
+            document.getElementById('s-purchases').textContent = s.total_purchases;
+            document.getElementById('s-cost').textContent = '$' + cost.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('s-profit').textContent = '$' + profit.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('s-profit').style.color = profit >= 0 ? '#4caf50' : '#f44336';
+            document.getElementById('s-shipping').textContent = '$' + shipping.toFixed(2) + ' (' + data.shipping.labels_purchased + ' labels)';
+
+            // Top items
+            const topBody = document.getElementById('top-items');
+            topBody.innerHTML = data.top_items.length === 0
+                ? '<tr><td colspan="4" class="empty">No sales in this period</td></tr>'
+                : data.top_items.map(i => `<tr>
+                    <td><strong>${esc(i.name || 'Unknown')}</strong></td>
+                    <td>${esc(i.category || '—')}</td>
+                    <td>${i.qty_sold}</td>
+                    <td style="color:#4caf50;font-weight:600;">$${parseFloat(i.revenue).toFixed(2)}</td>
+                </tr>`).join('');
+
+            // Daily
+            const dailyBody = document.getElementById('daily-body');
+            dailyBody.innerHTML = data.daily.length === 0
+                ? '<tr><td colspan="6" class="empty">No activity in this period</td></tr>'
+                : data.daily.map(d => {
+                    const net = parseFloat(d.revenue) - parseFloat(d.cost);
+                    return `<tr>
+                        <td>${new Date(d.date).toLocaleDateString()}</td>
+                        <td>${d.sales}</td>
+                        <td style="color:#4caf50;">$${parseFloat(d.revenue).toFixed(2)}</td>
+                        <td>${d.purchases}</td>
+                        <td style="color:#ff9800;">$${parseFloat(d.cost).toFixed(2)}</td>
+                        <td style="color:${net >= 0 ? '#4caf50' : '#f44336'};font-weight:600;">$${net.toFixed(2)}</td>
+                    </tr>`;
+                }).join('');
+        }
+
+        loadReport('month');
+    </script>
+</body>
+</html>
