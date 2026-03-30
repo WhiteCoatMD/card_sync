@@ -25,7 +25,17 @@
       "WebFetch(domain:seller.tcgplayer.com)",
       "WebFetch(domain:www.crystalcommerce.com)",
       "WebFetch(domain:www.sortswift.com)",
-      "WebFetch(domain:cardsynced.com)"
+      "WebFetch(domain:cardsynced.com)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 node -e \":*)",
+      "Bash(grep -r is_admin.*true /c/Users/13183/Card_Sync --include=*.js --include=*.sql)",
+      "Bash(grep -r admin /c/Users/13183/Card_Sync/api --include=*.js)",
+      "Bash(xargs grep:*)",
+      "Bash(find /c/Users/13183/Card_Sync -type f \\\\\\(-name *.sql -o -name *schema* -o -name *migration* \\\\\\))",
+      "Bash(curl:*)",
+      "Bash(find /c/Users/13183/Card_Sync -type f -name *.js -path */api/orders/* -o -path */api/subscription/* -o -path */api/inventory/*)",
+      "Bash(grep:*)",
+      "Bash(find /c/Users/13183/Card_Sync -type f \\\\\\(-name *.js -o -name *.html -o -name *.json \\\\\\))",
+      "Bash(cd:*)"
     ]
   }
 }

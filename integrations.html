@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Sync — Integrations</title>
+    <title>Collect Sync — Integrations</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #fff; min-height: 100vh; }
@@ -73,7 +73,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Card Sync</h1>
+        <h1>Collect Sync</h1>
         <div class="nav">
             <a href="admin.html" class="btn">Dashboard</a>
             <a href="inventory.html" class="btn">Inventory</a>
@@ -170,7 +170,7 @@
             </div>
 
             <p class="integration-desc">
-                Sync your Card Sync inventory with a Google Sheet. Any changes you make in the sheet will update your inventory, and vice versa. Great for managing inventory on the go or sharing with your team.
+                Sync your Collect Sync inventory with a Google Sheet. Any changes you make in the sheet will update your inventory, and vice versa. Great for managing inventory on the go or sharing with your team.
             </p>
 
             <!-- Connection Status -->
@@ -197,13 +197,13 @@
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h4>Share it with Card Sync</h4>
+                        <h4>Share it with Collect Sync</h4>
                         <p>Click the <strong>Share</strong> button in your Google Sheet, then add this email address as an <strong>Editor</strong>:</p>
                         <div class="service-email-box">
                             <span class="email">card-sync-sheets@card-sync-491400.iam.gserviceaccount.com</span>
                             <button class="btn btn-sm" onclick="copyEmail()">Copy</button>
                         </div>
-                        <p style="margin-top:6px;">Make sure to select <strong>"Editor"</strong> (not Viewer) so Card Sync can write to your sheet.</p>
+                        <p style="margin-top:6px;">Make sure to select <strong>"Editor"</strong> (not Viewer) so Collect Sync can write to your sheet.</p>
                     </div>
                 </div>
 
@@ -220,7 +220,7 @@
                     <div class="step-number">4</div>
                     <div class="step-content">
                         <h4>Connect and sync</h4>
-                        <p>Click <strong>Connect Sheet</strong> and Card Sync will verify access. Then use the sync buttons to push your inventory to the sheet or pull changes back. Your sheet headers will be set up automatically.</p>
+                        <p>Click <strong>Connect Sheet</strong> and Collect Sync will verify access. Then use the sync buttons to push your inventory to the sheet or pull changes back. Your sheet headers will be set up automatically.</p>
                     </div>
                 </div>
             </div>
@@ -264,7 +264,7 @@
                     <h2>PayPal <span class="tag tag-soon">Coming Soon</span></h2>
                 </div>
             </div>
-            <p class="integration-desc">Accept payments directly through your Card Sync marketplace with PayPal checkout integration.</p>
+            <p class="integration-desc">Accept payments directly through your Collect Sync marketplace with PayPal checkout integration.</p>
         </div>
 
         <!-- eBay Integration -->
@@ -281,7 +281,7 @@
             </div>
 
             <p class="integration-desc">
-                List your Card Sync inventory on eBay automatically. Push your cards as eBay listings and keep stock levels in sync across platforms. Requires Business plan or higher.
+                List your Collect Sync inventory on eBay automatically. Push your cards as eBay listings and keep stock levels in sync across platforms. Requires Business plan or higher.
             </p>
 
             <div class="status-bar" id="ebay-status-bar">
@@ -300,21 +300,21 @@
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h4>Click "Connect eBay"</h4>
-                        <p>You'll be redirected to eBay's login page to authorize Card Sync to manage your listings.</p>
+                        <p>You'll be redirected to eBay's login page to authorize Collect Sync to manage your listings.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
                         <h4>Log in and approve</h4>
-                        <p>Sign into your eBay seller account and click "Agree" to grant Card Sync access to your inventory and listings.</p>
+                        <p>Sign into your eBay seller account and click "Agree" to grant Collect Sync access to your inventory and listings.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h4>Start syncing</h4>
-                        <p>Once connected, use the sync buttons to push your inventory to eBay as live listings. Card Sync handles the rest.</p>
+                        <p>Once connected, use the sync buttons to push your inventory to eBay as live listings. Collect Sync handles the rest.</p>
                     </div>
                 </div>
             </div>
@@ -515,7 +515,7 @@
         }
 
         async function disconnectSheet() {
-            if (!confirm('Disconnect Google Sheet? Your inventory data will remain in Card Sync.')) return;
+            if (!confirm('Disconnect Google Sheet? Your inventory data will remain in Collect Sync.')) return;
             const data = await apiFetch('/api/sheets/status', { method: 'DELETE' });
             if (data.success) loadSheetStatus();
         }
