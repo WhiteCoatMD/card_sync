@@ -827,8 +827,7 @@
                 statusText.textContent = text;
 
                 actions.innerHTML = `
-                    <button class="btn btn-sm" style="background:#ff6600;border-color:#ff6600;" onclick="syncTcgplayer('match')">Match Products</button>
-                    <button class="btn btn-sm" style="background:#ff6600;border-color:#ff6600;" onclick="syncTcgplayer('push')">Push to TCGplayer</button>
+                    <a class="btn btn-sm" style="background:#ff6600;border-color:#ff6600;" href="/api/tcgplayer/export" target="_blank">Export CSV for TCGplayer</a>
                     <button class="btn btn-sm btn-danger" onclick="disconnectTcgplayer()">Disconnect</button>
                 `;
                 form.style.display = 'none';
