@@ -9,6 +9,7 @@ const { getPool } = require('../../lib/db');
 const { retryQuery } = require('../../lib/db-retry');
 const { buyLabel } = require('../../lib/shipping');
 const { getStripe, getDealerStripeAccount } = require('../../lib/stripe');
+const { getShippingSurcharge } = require('../../lib/plans');
 
 const pool = getPool();
 
@@ -36,15 +37,17 @@ module.exports = requireAuth(async function handler(req, res) {
             return res.status(400).json({ success: false, error: 'Connect your Stripe account first to purchase shipping labels' });
         }
 
-        // Charge the dealer's connected Stripe account
-        const amountCents = Math.round(parseFloat(rate_amount) * 100);
+        // Calculate total charge: label cost + surcharge for free tier
+        const surcharge = getShippingSurcharge(dealerAccount.plan);
+        const totalCharge = parseFloat(rate_amount) + surcharge;
+        const amountCents = Math.round(totalCharge * 100);
 
         let paymentIntent;
         try {
             paymentIntent = await stripe.paymentIntents.create({
                 amount: amountCents,
                 currency: 'usd',
-                description: `Shipping label${order_id ? ' for Order #' + order_id : ''}`,
+                description: `Shipping label${order_id ? ' for Order #' + order_id : ''}${surcharge > 0 ? ' (includes $' + surcharge.toFixed(2) + ' service fee)' : ''}`,
                 payment_method_types: ['card'],
                 confirm: true,
                 customer: undefined,

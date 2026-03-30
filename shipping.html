@@ -185,6 +185,19 @@
         let shipmentId = null;
         let selectedRateId = null;
         let selectedRateAmount = 0;
+        let shippingSurcharge = 0;
+        let userPlanName = 'Free';
+
+        // Check plan for surcharge
+        apiFetch('/api/auth/me').then(data => {
+            if (data.success) {
+                const plan = data.user.plan || 'free';
+                userPlanName = data.user.plan_name || 'Free';
+                if (plan === 'free') {
+                    shippingSurcharge = 2.00;
+                }
+            }
+        });
 
         function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
@@ -263,6 +276,10 @@
                 </div>
             `).join('');
 
+            if (shippingSurcharge > 0) {
+                list.innerHTML += '<div style="background:rgba(255,152,0,0.1);border:1px solid rgba(255,152,0,0.3);border-radius:8px;padding:12px;margin-top:10px;font-size:13px;color:#ff9800;">$' + shippingSurcharge.toFixed(2) + ' service fee applies on the Free plan. <a href="pricing.html" style="color:#4a90d9;">Upgrade</a> to remove it.</div>';
+            }
+
             document.getElementById('rates-section').classList.remove('hidden');
             document.getElementById('label-section').classList.add('hidden');
             document.getElementById('buy-btn').disabled = true;
@@ -275,7 +292,8 @@
             document.querySelectorAll('.rate-option').forEach(r => r.classList.remove('selected'));
             el.classList.add('selected');
             document.getElementById('buy-btn').disabled = false;
-            document.getElementById('buy-btn').textContent = 'Buy Label — $' + amount.toFixed(2);
+            const total = amount + shippingSurcharge;
+            document.getElementById('buy-btn').textContent = 'Buy Label — $' + total.toFixed(2) + (shippingSurcharge > 0 ? ' (incl. $' + shippingSurcharge.toFixed(2) + ' fee)' : '');
         }
 
         async function purchaseLabel() {
@@ -391,19 +409,7 @@
             alert(data.success ? 'Return address saved!' : (data.error || 'Failed'));
         }
 
-        // Feature gate
-        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(r => r.json()).then(data => {
-                if (data.success && !data.user.features.includes('shipping_labels')) {
-                    document.querySelector('.container').innerHTML = `
-                        <div style="text-align:center;padding:4rem;">
-                            <h2 style="margin-bottom:1rem;">Shipping Labels</h2>
-                            <p style="color:#888;margin-bottom:1.5rem;">Generate USPS, UPS, and FedEx shipping labels directly from Collect Sync.</p>
-                            <p style="color:#ff9800;margin-bottom:1.5rem;">&#128274; This feature requires a Business plan or higher.</p>
-                            <a href="pricing.html" class="btn btn-primary" style="padding:12px 24px;font-size:15px;">Upgrade Your Plan</a>
-                        </div>`;
-                }
-            });
+        // No feature gate — all plans get shipping, free tier pays surcharge
 
         // Check if order_id passed in URL
         const params = new URLSearchParams(window.location.search);

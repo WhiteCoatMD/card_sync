@@ -191,12 +191,6 @@
         const token = localStorage.getItem('auth_token');
         if (!token) window.location.href = 'login.html';
 
-        let hasShipping = false;
-        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(r => r.json()).then(data => {
-                if (data.success) hasShipping = data.user.features.includes('shipping_labels');
-            });
-
         let currentPage = 1;
         let orderType = 'sell';
         let inventoryCache = [];
@@ -243,9 +237,7 @@
                     <td>${o.shipping_tracking ? '<a class="tracking-link" href="https://tools.usps.com/go/TrackConfirmAction?tLabels=' + esc(o.shipping_tracking) + '" target="_blank">' + esc(o.shipping_tracking) + '</a>' : '<span style="color:#555;">—</span>'}</td>
                     <td>${new Date(o.created_at).toLocaleDateString()}</td>
                     <td>${o.type === 'sell' && o.status === 'completed' && !o.shipping_tracking
-                        ? (hasShipping
-                            ? '<a class="btn btn-sm ship-btn" href="shipping.html?order=' + o.id + '" onclick="event.stopPropagation();">Ship</a>'
-                            : '<button class="btn btn-sm" style="opacity:0.35;" onclick="event.stopPropagation();alert(\'Upgrade to Business plan to create shipping labels\')" title="Upgrade to unlock">&#128274; Ship</button>')
+                        ? '<a class="btn btn-sm ship-btn" href="shipping.html?order=' + o.id + '" onclick="event.stopPropagation();">Ship</a>'
                         : (o.shipping_label_url ? '<a href="' + esc(o.shipping_label_url) + '" target="_blank" class="btn btn-sm" style="font-size:11px;" onclick="event.stopPropagation();">Label</a>' : (o.shipping_tracking ? '' : ''))}</td>
                 </tr>
                 <tr class="order-detail" id="detail-${o.id}">
