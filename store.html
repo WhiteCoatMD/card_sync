@@ -379,10 +379,15 @@
 
             // Apply theme
             const theme = data.store.theme || 'midnight';
-            document.body.className = document.body.className.replace(/theme-\S+/g, '');
+            document.body.className = '';
             document.body.classList.add('theme-' + theme);
+            // Custom accent overrides theme accent
             if (data.store.accent_color) {
                 document.documentElement.style.setProperty('--accent', data.store.accent_color);
+                document.documentElement.style.setProperty('--accent-hover', data.store.accent_color);
+            } else {
+                document.documentElement.style.removeProperty('--accent');
+                document.documentElement.style.removeProperty('--accent-hover');
             }
             document.getElementById('store-desc').textContent = data.store.description;
 
