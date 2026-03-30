@@ -143,41 +143,50 @@
                     <div class="form-group">
                         <label>Store Theme</label>
                         <div id="theme-picker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;">
-                            <div class="theme-option" data-theme="midnight" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#0a0a1a,#1a1a2e);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Midnight</span>
+                            <div class="theme-option" data-theme="midnight" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#0a0a1a;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#4a90d9;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#1a1a2e;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#2a2a3e;border-radius:2px;"></div><div style="flex:1;height:12px;background:#2a2a3e;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Midnight</span>
                             </div>
-                            <div class="theme-option" data-theme="dark-slate" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#0f1419,#1c2733);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Dark Slate</span>
+                            <div class="theme-option" data-theme="dark-slate" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#0f1419;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#1d9bf0;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#1c2733;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#38444d;border-radius:2px;"></div><div style="flex:1;height:12px;background:#38444d;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Dark Slate</span>
                             </div>
-                            <div class="theme-option" data-theme="forest" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#0a1a0a,#1a2e1a);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Forest</span>
+                            <div class="theme-option" data-theme="forest" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#0c1a0c;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#66bb6a;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#162216;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#2a3e2a;border-radius:2px;"></div><div style="flex:1;height:12px;background:#2a3e2a;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Forest</span>
                             </div>
-                            <div class="theme-option" data-theme="crimson" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#1a0a0a,#2e1a1a);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Crimson</span>
+                            <div class="theme-option" data-theme="crimson" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#120808;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#ef5350;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#1e1010;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#3a2020;border-radius:2px;"></div><div style="flex:1;height:12px;background:#3a2020;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Crimson</span>
                             </div>
-                            <div class="theme-option" data-theme="royal" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#0f0a1a,#1e1a2e);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Royal</span>
+                            <div class="theme-option" data-theme="royal" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#0c0814;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#b388ff;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#18122a;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#302550;border-radius:2px;"></div><div style="flex:1;height:12px;background:#302550;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Royal</span>
                             </div>
-                            <div class="theme-option" data-theme="ocean" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#0a1a1a,#1a2e2e);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Ocean</span>
+                            <div class="theme-option" data-theme="ocean" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#061218;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#00e5ff;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#0d2137;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#1a3a5c;border-radius:2px;"></div><div style="flex:1;height:12px;background:#1a3a5c;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Ocean</span>
                             </div>
-                            <div class="theme-option" data-theme="sunset" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#1a0f0a,#2e1e1a);border-radius:4px;margin-bottom:4px;"></div>
-                                <span style="font-size:11px;color:#aaa;">Sunset</span>
+                            <div class="theme-option" data-theme="sunset" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#14100a;border-radius:4px 4px 0 0;position:relative;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#ffab40;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#231a10;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;"><div style="flex:1;height:12px;background:#3e3020;border-radius:2px;"></div><div style="flex:1;height:12px;background:#3e3020;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Sunset</span>
                             </div>
-                            <div class="theme-option" data-theme="clean-light" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#f5f5f5,#ffffff);border-radius:4px;margin-bottom:4px;border:1px solid #ddd;"></div>
-                                <span style="font-size:11px;color:#aaa;">Clean Light</span>
+                            <div class="theme-option" data-theme="clean-light" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#f0f2f5;border-radius:4px 4px 0 0;position:relative;border:1px solid #ddd;border-bottom:0;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#2563eb;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#fff;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;border:1px solid #ddd;border-top:0;"><div style="flex:1;height:12px;background:#dee2e6;border-radius:2px;"></div><div style="flex:1;height:12px;background:#dee2e6;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Clean Light</span>
                             </div>
-                            <div class="theme-option" data-theme="warm-light" onclick="selectTheme(this)" style="padding:10px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
-                                <div style="height:24px;background:linear-gradient(135deg,#faf8f5,#ffffff);border-radius:4px;margin-bottom:4px;border:1px solid #ddd;"></div>
-                                <span style="font-size:11px;color:#aaa;">Warm Light</span>
+                            <div class="theme-option" data-theme="warm-light" onclick="selectTheme(this)" style="padding:12px;border:2px solid #333;border-radius:8px;cursor:pointer;text-align:center;">
+                                <div style="height:40px;background:#f5f0e8;border-radius:4px 4px 0 0;position:relative;border:1px solid #ddd;border-bottom:0;"><div style="position:absolute;bottom:4px;left:6px;width:20px;height:3px;background:#c2702a;border-radius:2px;"></div></div>
+                                <div style="height:20px;background:#fffdf8;border-radius:0 0 4px 4px;display:flex;gap:3px;padding:4px 6px;border:1px solid #ddd;border-top:0;"><div style="flex:1;height:12px;background:#e0d5c5;border-radius:2px;"></div><div style="flex:1;height:12px;background:#e0d5c5;border-radius:2px;"></div></div>
+                                <span style="font-size:11px;color:#aaa;margin-top:6px;display:block;">Warm Light</span>
                             </div>
                         </div>
                     </div>
