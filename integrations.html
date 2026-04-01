@@ -1015,8 +1015,8 @@
 
             if (data.success) {
                 loadFbStatus();
-                alert(`Posted ${data.posted}/${data.total} cards to Facebook.` +
-                    (data.errors?.length ? ` ${data.errors.length} errors.` : ''));
+                alert(`Posted ${data.posted} cards to Facebook.` +
+                    (data.errors ? ` ${data.errors} errors.` : ''));
             } else {
                 alert(data.error || 'Facebook post failed');
             }
