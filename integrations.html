@@ -70,6 +70,31 @@
         /* Coming soon cards */
         .coming-soon { opacity: 0.5; }
         .coming-soon .tag-soon { background: rgba(255,152,0,0.2); color: #ff9800; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid #2a2a3e; padding-bottom: 0; }
+        .tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: #888; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab:hover { color: #ccc; }
+        .tab.active { color: #fff; border-bottom-color: #4a90d9; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Collapsible cards */
+        .integration-card { transition: all 0.2s; }
+        .integration-card.collapsed .integration-desc,
+        .integration-card.collapsed .status-bar,
+        .integration-card.collapsed .steps,
+        .integration-card.collapsed .connect-form,
+        .integration-card.collapsed #fb-page-select,
+        .integration-card.collapsed #fb-schedule-section,
+        .integration-card.collapsed .form-row,
+        .integration-card.collapsed .connect-actions,
+        .integration-card.collapsed .store-theme-section,
+        .integration-card.collapsed .service-email-box { display: none !important; }
+        .integration-card.collapsed { padding: 16px 28px; margin-bottom: 8px; }
+        .integration-card.collapsed .integration-header { margin-bottom: 0; }
+        .collapse-toggle { margin-left: auto; background: none; border: none; color: #888; cursor: pointer; font-size: 18px; padding: 4px 8px; transition: transform 0.2s; }
+        .integration-card.collapsed .collapse-toggle { transform: rotate(-90deg); }
     </style>
 </head>
 <body>
@@ -86,6 +111,13 @@
     <div class="container">
         <h1 class="page-title">Integrations</h1>
         <p class="page-subtitle">Connect external tools to keep your inventory in sync automatically.</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('integrations')">Integrations</button>
+            <button class="tab" onclick="switchTab('social')">Social Media</button>
+        </div>
+
+        <div class="tab-content active" id="tab-integrations">
 
         <!-- Online Store / Subdomain -->
         <div class="integration-card" id="shop-card">
@@ -379,93 +411,6 @@
             </div>
         </div>
 
-        <!-- Facebook Integration -->
-        <div class="integration-card" id="facebook-card">
-            <div class="integration-header">
-                <div class="integration-icon" style="background:rgba(24,119,242,0.15);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="#1877f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2>Facebook <span class="tag tag-not-connected" id="fb-tag">Not Connected</span></h2>
-                </div>
-            </div>
-
-            <p class="integration-desc">
-                Auto-post your card listings to your Facebook Business Page. Schedule batch posts, get notified on engagement, and use the Marketplace posting assistant.
-            </p>
-
-            <div class="status-bar" id="fb-status-bar">
-                <div class="status-info">
-                    <div class="status-dot off" id="fb-dot"></div>
-                    <span id="fb-status-text">Not connected</span>
-                </div>
-                <div class="status-actions" id="fb-status-actions">
-                    <button class="btn btn-sm" style="background:#1877f2;border-color:#1877f2;" onclick="connectFacebook()">Connect Facebook</button>
-                </div>
-            </div>
-
-            <!-- Page selector (hidden until connected) -->
-            <div id="fb-page-select" style="display:none;margin-top:16px;">
-                <h3 style="margin-bottom:8px;">Select a Page to post to</h3>
-                <div id="fb-pages-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-            </div>
-
-            <!-- Schedule settings (hidden until page selected) -->
-            <div id="fb-schedule-section" style="display:none;margin-top:16px;">
-                <h3 style="margin-bottom:8px;">Posting Settings</h3>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-                        <input type="checkbox" id="fb-auto-new" onchange="saveFbSchedule()"> Auto-post new cards
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-                        <input type="checkbox" id="fb-auto-price" onchange="saveFbSchedule()"> Auto-post price drops
-                    </label>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
-                    <div>
-                        <label style="font-size:12px;color:#888;">Scheduled Posts</label>
-                        <select id="fb-schedule" onchange="saveFbSchedule()" style="width:100%;padding:8px;background:#12122a;border:1px solid #2a2a3e;border-radius:6px;color:#fff;font-size:13px;">
-                            <option value="">Off</option>
-                            <option value="daily_5">5 cards/day</option>
-                            <option value="daily_10">10 cards/day</option>
-                            <option value="twice_daily_5">5 cards twice/day</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:12px;color:#888;">Post Time</label>
-                        <input type="time" id="fb-time" value="18:00" onchange="saveFbSchedule()" style="width:100%;padding:8px;background:#12122a;border:1px solid #2a2a3e;border-radius:6px;color:#fff;font-size:13px;">
-                    </div>
-                </div>
-            </div>
-
-            <div class="steps">
-                <h3>How to Connect</h3>
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Click "Connect Facebook"</h4>
-                        <p>You'll be redirected to Facebook to authorize Collect Sync to post on your Business Page.</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Select your Page</h4>
-                        <p>Choose which Facebook Page you want your card listings posted to.</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Configure posting</h4>
-                        <p>Set up auto-posting for new cards, price drops, and scheduled daily posts to keep your Page active.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Shipping / Return Address -->
         <div class="integration-card">
             <div class="integration-header">
@@ -571,9 +516,141 @@
                 </div>
             </div>
         </div>
+
+        </div><!-- end tab-integrations -->
+
+        <div class="tab-content" id="tab-social">
+
+        <!-- Facebook Integration -->
+        <div class="integration-card" id="facebook-card">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(24,119,242,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="#1877f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Facebook <span class="tag tag-not-connected" id="fb-tag">Not Connected</span></h2>
+                </div>
+            </div>
+
+            <p class="integration-desc">
+                Auto-post your card listings to your Facebook Business Page. Schedule batch posts, get notified on engagement, and use the Marketplace posting assistant.
+            </p>
+
+            <div class="status-bar" id="fb-status-bar">
+                <div class="status-info">
+                    <div class="status-dot off" id="fb-dot"></div>
+                    <span id="fb-status-text">Not connected</span>
+                </div>
+                <div class="status-actions" id="fb-status-actions">
+                    <button class="btn btn-sm" style="background:#1877f2;border-color:#1877f2;" onclick="connectFacebook()">Connect Facebook</button>
+                </div>
+            </div>
+
+            <!-- Page selector (hidden until connected) -->
+            <div id="fb-page-select" style="display:none;margin-top:16px;">
+                <h3 style="margin-bottom:8px;">Select a Page to post to</h3>
+                <div id="fb-pages-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+
+            <!-- Schedule settings (hidden until page selected) -->
+            <div id="fb-schedule-section" style="display:none;margin-top:16px;">
+                <h3 style="margin-bottom:8px;">Posting Settings</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                        <input type="checkbox" id="fb-auto-new" onchange="saveFbSchedule()"> Auto-post new cards
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                        <input type="checkbox" id="fb-auto-price" onchange="saveFbSchedule()"> Auto-post price drops
+                    </label>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                    <div>
+                        <label style="font-size:12px;color:#888;">Scheduled Posts</label>
+                        <select id="fb-schedule" onchange="saveFbSchedule()" style="width:100%;padding:8px;background:#12122a;border:1px solid #2a2a3e;border-radius:6px;color:#fff;font-size:13px;">
+                            <option value="">Off</option>
+                            <option value="daily_5">5 cards/day</option>
+                            <option value="daily_10">10 cards/day</option>
+                            <option value="twice_daily_5">5 cards twice/day</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#888;">Post Time</label>
+                        <input type="time" id="fb-time" value="18:00" onchange="saveFbSchedule()" style="width:100%;padding:8px;background:#12122a;border:1px solid #2a2a3e;border-radius:6px;color:#fff;font-size:13px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="steps">
+                <h3>How to Connect</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Click "Connect Facebook"</h4>
+                        <p>You'll be redirected to Facebook to authorize Collect Sync to post on your Business Page.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Select your Page</h4>
+                        <p>Choose which Facebook Page you want your card listings posted to.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Configure posting</h4>
+                        <p>Set up auto-posting for new cards, price drops, and scheduled daily posts to keep your Page active.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instagram (Coming Soon) -->
+        <div class="integration-card coming-soon">
+            <div class="integration-header">
+                <div class="integration-icon" style="background:rgba(225,48,108,0.15);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="#e1306c" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="5" stroke="#e1306c" stroke-width="2"/>
+                        <circle cx="17.5" cy="6.5" r="1.5" fill="#e1306c"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Instagram <span class="tag tag-soon">Coming Soon</span></h2>
+                </div>
+            </div>
+            <p class="integration-desc">Cross-post your card listings to Instagram automatically. Uses the same Facebook connection — coming in a future update.</p>
+        </div>
+
+        </div><!-- end tab-social -->
+
     </div>
 
     <script>
+        // --- Tab switching ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // --- Collapsible cards ---
+        document.querySelectorAll('.integration-header').forEach(header => {
+            const card = header.closest('.integration-card');
+            if (card.classList.contains('coming-soon')) return;
+            const btn = document.createElement('button');
+            btn.className = 'collapse-toggle';
+            btn.innerHTML = '&#9660;';
+            btn.onclick = (e) => { e.stopPropagation(); card.classList.toggle('collapsed'); };
+            header.appendChild(btn);
+            header.style.cursor = 'pointer';
+            header.onclick = () => card.classList.toggle('collapsed');
+        });
+
         const token = localStorage.getItem('auth_token');
         if (!token) window.location.href = 'login.html';
 

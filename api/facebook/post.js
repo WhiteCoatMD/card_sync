@@ -80,7 +80,7 @@ module.exports = requireAuth(async function handler(req, res) {
 
             // Record the post
             await pool.query(
-                `INSERT INTO facebook_posts (user_id, inventory_id, page_id, fb_post_id, post_type)
+                `INSERT INTO facebook_posts (user_id, inventory_id, page_id, facebook_post_id, post_type)
                  VALUES ($1, $2, $3, $4, 'page_post')`,
                 [userId, item_id, tokenData.pageId, fbResult.id || fbResult.post_id || null]
             );
@@ -125,7 +125,7 @@ module.exports = requireAuth(async function handler(req, res) {
                     const fbResult = await postCardToPage(tokenData.pageToken, tokenData.pageId, card, subdomain);
 
                     await pool.query(
-                        `INSERT INTO facebook_posts (user_id, inventory_id, page_id, fb_post_id, post_type)
+                        `INSERT INTO facebook_posts (user_id, inventory_id, page_id, facebook_post_id, post_type)
                          VALUES ($1, $2, $3, $4, 'page_post')`,
                         [userId, card.id, tokenData.pageId, fbResult.id || fbResult.post_id || null]
                     );
