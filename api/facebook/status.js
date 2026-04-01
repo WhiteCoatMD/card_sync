@@ -18,7 +18,7 @@ module.exports = requireAuth(async function handler(req, res) {
     if (req.method === 'GET') {
         const result = await pool.query(
             `SELECT id, page_id, page_name, token_expires_at, post_schedule, schedule_time,
-                    auto_post_new, auto_post_price_drop, last_sync_status, last_sync_message, created_at
+                    auto_post_new, auto_post_price_drop, last_posted_at, last_post_status, last_post_message, created_at
              FROM facebook_connections WHERE user_id = $1`,
             [req.user.id]
         );
