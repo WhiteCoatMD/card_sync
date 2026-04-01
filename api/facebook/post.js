@@ -27,7 +27,7 @@ module.exports = requireAuth(async function handler(req, res) {
 
         // Get the user's shop subdomain for store links
         const subResult = await pool.query(
-            'SELECT subdomain FROM shop_subdomains WHERE user_id = $1',
+            'SELECT subdomain FROM users WHERE id = $1',
             [userId]
         );
         const subdomain = subResult.rows.length > 0 ? subResult.rows[0].subdomain : null;
