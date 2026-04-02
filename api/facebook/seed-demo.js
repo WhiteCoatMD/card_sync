@@ -4,7 +4,7 @@
  * Admin only, one-time use
  */
 
-const { requireAuth } = require('../../lib/auth');
+const { requireAuth, createUser } = require('../../lib/auth');
 const { setCorsHeaders } = require('../../lib/cors-security');
 const { getPool } = require('../../lib/db');
 
@@ -99,20 +99,23 @@ module.exports = requireAuth(async function handler(req, res) {
         return res.status(403).json({ success: false, error: 'Admin access required' });
     }
 
-    const { user_email } = req.body || {};
-    if (!user_email) {
-        return res.status(400).json({ success: false, error: 'user_email is required' });
-    }
+    const email = 'metareview@collect-sync.com';
+    const password = 'MetaReview2026!';
+    const displayName = 'Meta App Reviewer';
 
     const pool = getPool();
 
     try {
-        const userRes = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
-        if (userRes.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'User not found' });
+        let userId;
+        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existing.rows.length > 0) {
+            userId = existing.rows[0].id;
+            // Clear any existing demo inventory
+            await pool.query("DELETE FROM inventory WHERE user_id = $1", [userId]);
+        } else {
+            const user = await createUser(email, password, displayName);
+            userId = user.id;
         }
-
-        const userId = userRes.rows[0].id;
         let inserted = 0;
 
         for (const card of DEMO_CARDS) {
@@ -126,7 +129,8 @@ module.exports = requireAuth(async function handler(req, res) {
 
         return res.status(200).json({
             success: true,
-            message: `Seeded ${inserted} demo cards for ${user_email}`
+            message: `Account ready with ${inserted} demo cards`,
+            credentials: { email, password }
         });
     } catch (err) {
         console.error('Seed demo error:', err);
