@@ -53,7 +53,7 @@
         .welcome-banner-actions { display: flex; gap: 10px; align-items: center; }
         .welcome-banner .dismiss { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 4px 8px; }
         .welcome-banner .dismiss:hover { color: #aaa; }
-        .btn-help { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; padding: 0; }
+        .btn-help { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; padding: 0; }
         @media (max-width: 768px) {
             .header { flex-direction: column; gap: 10px; padding: 1rem; }
             .header-right { flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -103,7 +103,7 @@
             </div>
 
             <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Admin</a>
-            <a href="quickstart.html" class="btn btn-help" title="Quickstart Guide">?</a>
+            <a href="quickstart.html" class="btn btn-help" title="Quickstart Guide" aria-label="Quickstart Guide">?</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
             <button class="btn" onclick="logout()">Logout</button>
         </div>
@@ -114,7 +114,7 @@
             <div class="welcome-banner-text"><strong>Welcome to Card Sync!</strong> Get your shop set up in just a few minutes.</div>
             <div class="welcome-banner-actions">
                 <a href="quickstart.html" class="btn btn-primary">View Quickstart Guide</a>
-                <button class="dismiss" onclick="dismissBanner()" title="Dismiss">&times;</button>
+                <button class="dismiss" onclick="dismissBanner()" title="Dismiss" aria-label="Dismiss welcome banner">&times;</button>
             </div>
         </div>
 
