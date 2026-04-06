@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
 
         // Send welcome email (non-blocking — don't fail signup if email fails)
         try {
-            const name = displayName || 'there';
+            const name = (displayName || 'there').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
             await sendEmail({
                 to: email,
                 subject: 'Welcome to Card Sync!',
