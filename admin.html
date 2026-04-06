@@ -47,6 +47,13 @@
         .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
         .badge-buy { background: rgba(255,152,0,0.2); color: #ff9800; }
         .badge-sell { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .welcome-banner { background: linear-gradient(135deg, #1a2a4a, #1a1a2e); border: 1px solid #4a90d9; border-radius: 10px; padding: 20px 24px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-banner-text { font-size: 15px; color: #ccc; }
+        .welcome-banner-text strong { color: #fff; }
+        .welcome-banner-actions { display: flex; gap: 10px; align-items: center; }
+        .welcome-banner .dismiss { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+        .welcome-banner .dismiss:hover { color: #aaa; }
+        .btn-help { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; padding: 0; }
         @media (max-width: 768px) {
             .header { flex-direction: column; gap: 10px; padding: 1rem; }
             .header-right { flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -96,12 +103,20 @@
             </div>
 
             <a href="super-admin.html" class="btn" id="admin-link" style="display:none;background:rgba(244,67,54,0.15);border-color:rgba(244,67,54,0.3);color:#f44336;">Admin</a>
+            <a href="quickstart.html" class="btn btn-help" title="Quickstart Guide">?</a>
             <span id="user-name" style="color:#aaa;font-size:13px;"></span>
             <button class="btn" onclick="logout()">Logout</button>
         </div>
     </div>
     <div class="container">
         <p class="welcome" id="welcome">Welcome back!</p>
+        <div class="welcome-banner" id="welcome-banner" style="display:none;">
+            <div class="welcome-banner-text"><strong>Welcome to Card Sync!</strong> Get your shop set up in just a few minutes.</div>
+            <div class="welcome-banner-actions">
+                <a href="quickstart.html" class="btn btn-primary">View Quickstart Guide</a>
+                <button class="dismiss" onclick="dismissBanner()" title="Dismiss">&times;</button>
+            </div>
+        </div>
 
         <div class="stats-grid" id="stats-grid">
             <div class="stat-card"><div class="label">Total Cards</div><div class="value" id="stat-cards">—</div><div class="sub" id="stat-cards-sub"></div></div>
@@ -162,6 +177,16 @@
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
         if (!token) window.location.href = 'login.html';
+
+        // Show welcome banner for new users
+        if (!localStorage.getItem('quickstart_dismissed')) {
+            document.getElementById('welcome-banner').style.display = '';
+        }
+
+        function dismissBanner() {
+            localStorage.setItem('quickstart_dismissed', '1');
+            document.getElementById('welcome-banner').style.display = 'none';
+        }
 
         document.getElementById('user-name').textContent = user.email || '';
         document.getElementById('welcome').textContent = 'Welcome back' + (user.displayName ? ', ' + user.displayName : '') + '!';
