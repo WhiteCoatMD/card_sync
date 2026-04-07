@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/price-alerts",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/facebook-posts",
+      "schedule": "0 10,18 * * *"
     }
   ],
   "rewrites": [
